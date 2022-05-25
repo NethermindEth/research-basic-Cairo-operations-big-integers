@@ -2,6 +2,8 @@
 
 Cairo implementation of operations between elements of a prime field $\mathbb{F}_p$ (i.e. operations modulo a prime p) with p of up to 384 bits. (Note that Cairo's native "integer" is of 251 bits)
 
+**NOTE**: Hints are currently in revision by StarkWare for whitelisting
+
 The implemented operations are:
 
 - addition and subtraction modulo p
