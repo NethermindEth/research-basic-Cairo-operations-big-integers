@@ -2,6 +2,8 @@
 
 Implementation of basic operations between unsigned 384-bit integers. Some operations are also supported for signed 384-bit integers.  (Note that Cairo's native "integer" is of 251 bits)
 
+**NOTE**: Hints are currently in revision by StarkWare for whitelisting
+
 The library follows and extends Cairo's common library `uint256`. The usage and logic is almost the same as in `uint256`. All operations from `uint256` are implemented here for 384 bits. 
 
 Recall that in `uint256`, 256-bit integers are represented by the struct:
