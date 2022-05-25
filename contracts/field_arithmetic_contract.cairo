@@ -2,7 +2,8 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from lib.uint384 import uint384_lib, Uint384
+# Import uint384 files (path may change in the future)
+from uint384_cairo_imported.lib.uint384 import uint384_lib, Uint384
 from lib.uint384_extension import uint384_extension_lib, Uint768
 from lib.field_arithmetic import field_arithmetic
 

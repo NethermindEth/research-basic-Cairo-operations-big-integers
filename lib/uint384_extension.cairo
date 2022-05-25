@@ -4,7 +4,8 @@ from starkware.cairo.common.math import assert_in_range, assert_le, assert_nn_le
 from starkware.cairo.common.math_cmp import is_le
 from starkware.cairo.common.pow import pow
 from starkware.cairo.common.registers import get_ap, get_fp_and_pc
-from lib.uint384 import uint384_lib, Uint384, ALL_ONES
+# Import uint384 files (path may change in the future)
+from uint384_cairo_imported.lib.uint384 import uint384_lib, Uint384, ALL_ONES
 
 # Functions for operating 384-bit integers with 768-bit integers
 
