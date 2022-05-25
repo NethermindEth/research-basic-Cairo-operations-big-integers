@@ -16,6 +16,3 @@ def split(num: int, num_bits_shift: int, length: int) -> List[int]:
 def pack(z: Tuple[int], num_bits_shift: int) -> int:
     limbs = (limb for limb in z)
     return sum(limb << (num_bits_shift * i) for i, limb in enumerate(limbs))
-
-# Prime p with which to test the field arithmetic functions
-elliptic_curve_field_modulus = 4002409555221667393417789825735904156556882819939007885332058136124031650490837864442687629129015664037894272559787
