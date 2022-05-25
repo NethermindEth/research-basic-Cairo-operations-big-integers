@@ -1,6 +1,6 @@
 # uint384
 
-Implementation of basic operations between unsigned 384-bit integers (some operations are also supported for signed 384-bit integers). 
+Implementation of basic operations between unsigned 384-bit integers. Some operations are also supported for signed 384-bit integers.  (Note that Cairo's native "integer" is of 251 bits)
 
 The library follows and extends Cairo's common library `uint256`. The usage and logic is almost the same as in `uint256`. All operations from `uint256` are implemented here for 384 bits. 
 
