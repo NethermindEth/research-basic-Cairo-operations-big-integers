@@ -19,6 +19,6 @@ Tests are provided for all functions.
 
 ## Technical notes
 
-- The exponentiation function follows the usual "fast exponentiation algorithm" so as to perform `log(exponent)` of multiplications.
+- The exponentiation function follows the "[fast exponentiation algorithm](https://en.wikipedia.org/wiki/Exponentiation_by_squaring)" so as to perform `log(exponent)` of multiplications.
 - As in the common library `uint256`, division operations are performed in python hints, and verified afterwards in Cairo using multiplication and addition operations.
 - `uint384_extension` implements the function `unsigned_div_rem_uint768_by_uint384` which computes the quotient and remainder of dividing a 768-bit integer by a 384-bit integer. This allows to multiply two 384-bit integers (obtaining a 768-bit integer) and then reduce the result modulo a 384-bit integer by calling this function. This is a key component of this repository.
