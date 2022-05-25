@@ -9,7 +9,7 @@ The implemented operations are:
 - division (i.e.\ multiplication by the modular inverse) modulo p
 - exponentiation modulo p
 
-The library depends on the `uint384` library. Specifically, it uses the struct `Uint384` to represent 384-bit integers, which consists of three 128-bit felts (as Cairo's common library struct `Uint256`). It is important to never use felts larger than this as members of a `Uint384`.
+The library depends on the [uint384-cairo](https://github.com/NethermindEth/uint384-cairo) library. Specifically, it uses the struct `Uint384` to represent 384-bit integers, which consists of three 128-bit felts (as Cairo's common library struct `Uint256`). It is important to never use felts larger than this as members of a `Uint384`.
 
 The auxiliary libray `uint384_extension` implements some extra functions involving operations between 384-bit integers and 768-bit integers. These are needed in `field_arithmetic.cairo` (there's some more details below in the technical notes)
 
