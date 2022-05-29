@@ -4,7 +4,7 @@
 from starkware.cairo.common.cairo_builtins import HashBuiltin, BitwiseBuiltin
 from starkware.cairo.common.uint256 import Uint256, uint256_sqrt
 # Import uint384 files (path may change in the future)
-from uint384_cairo_imported.lib.uint384 import uint384_lib, Uint384
+from uint384_cairo.lib.uint384 import uint384_lib, Uint384
 from lib.uint384_extension import uint384_extension_lib, Uint768
 
 # StarkNet contract implementing view calls to lib/uint384_extension.cairo's functions
