@@ -5,7 +5,7 @@ from starkware.cairo.common.math_cmp import is_le
 from starkware.cairo.common.pow import pow
 from starkware.cairo.common.registers import get_ap, get_fp_and_pc
 # Import uint384 files (path may change in the future)
-from uint384_cairo.lib.uint384 import uint384_lib, Uint384, ALL_ONES
+from lib.uint384 import uint384_lib, Uint384, ALL_ONES
 
 # Functions for operating 384-bit integers with 768-bit integers
 
@@ -21,8 +21,6 @@ struct Uint768:
 end
 
 namespace uint384_extension_lib:
-    
-    
     # Adds a 768-bit integer and a 384-bit integer. Returns the result as a 768-bit integer and the (1-bit) carry.
     func add_uint768_and_uint384{range_check_ptr}(a : Uint768, b : Uint384) -> (
         res : Uint768, carry : felt
@@ -40,7 +38,7 @@ namespace uint384_extension_lib:
         res.d1 = sum_low.d1
         res.d2 = sum_low.d2
 
-        let (a_high_plus_carry, carry1) = uint384_lib.add(a_high, Uint384(carry0, 0,0))
+        let (a_high_plus_carry, carry1) = uint384_lib.add(a_high, Uint384(carry0, 0, 0))
 
         res.d3 = a_high_plus_carry.d0
         res.d4 = a_high_plus_carry.d1
@@ -48,10 +46,9 @@ namespace uint384_extension_lib:
 
         return (res, carry1)
     end
-    
-    
-    # Multiplies a 768-bit integer and a 384-bit integer. 
-    # Returns the result (1152 bits) as a 768-bit integer (the lower bits of the result) and 
+
+    # Multiplies a 768-bit integer and a 384-bit integer.
+    # Returns the result (1152 bits) as a 768-bit integer (the lower bits of the result) and
     # a 384-bit integer (the higher bits of the result)
     func mul_uint768_by_uint384{range_check_ptr}(a : Uint768, b : Uint384) -> (
         low : Uint768, high : Uint384
@@ -69,7 +66,7 @@ namespace uint384_extension_lib:
 
         assert_le(carry0, 2)
 
-        let ( high_high_with_carry : Uint384, carry1 : felt) = uint384_lib.add(
+        let (high_high_with_carry : Uint384, carry1 : felt) = uint384_lib.add(
             high_high, Uint384(carry0, 0, 0)
         )
         assert carry1 = 0
@@ -91,9 +88,9 @@ namespace uint384_extension_lib:
 
         return (low=res_low, high=res_high)
     end
-    
+
     # Unsigned integer division between a 768-bit integer and a 384-bit integer. Returns the quotient (768 bits) and the remainder (384 bits).
-    # Conforms to EVM specifications: division by 0 yields 0. 
+    # Conforms to EVM specifications: division by 0 yields 0.
     func unsigned_div_rem_uint768_by_uint384{range_check_ptr}(a : Uint768, div : Uint384) -> (
         quotient : Uint768, remainder : Uint384
     ):
@@ -139,24 +136,23 @@ namespace uint384_extension_lib:
             remainder_split = split(remainder, num_bits_shift=128, length=3)
             ids.remainder.d0 = remainder_split[0]
             ids.remainder.d1 = remainder_split[1]
-            ids.remainder.d2 = remainder_split[2]     
+            ids.remainder.d2 = remainder_split[2]
         %}
 
         let (res_mul_low : Uint768, res_mul_high : Uint384) = mul_uint768_by_uint384(quotient, div)
-        
-        assert res_mul_high = Uint384(0, 0, 0)
 
+        assert res_mul_high = Uint384(0, 0, 0)
 
         let (check_val : Uint768, add_carry : felt) = add_uint768_and_uint384(
             res_mul_low, remainder
         )
-        
+
         assert add_carry = 0
         assert check_val = a
 
         let (is_valid) = uint384_lib.lt(remainder, div)
         assert is_valid = 1
-        
+
         return (quotient=quotient, remainder=remainder)
     end
 end

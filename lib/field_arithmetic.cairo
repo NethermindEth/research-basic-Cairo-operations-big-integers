@@ -5,7 +5,7 @@ from starkware.cairo.common.math_cmp import is_le
 from starkware.cairo.common.pow import pow
 from starkware.cairo.common.registers import get_ap, get_fp_and_pc
 # Import uint384 files (path may change in the future)
-from uint384_cairo.lib.uint384 import uint384_lib, Uint384
+from lib.uint384 import uint384_lib, Uint384
 from lib.uint384_extension import uint384_extension_lib, Uint768
 
 # Functions for operating elements in a finite field F_p (i.e. modulo a prime p), with p of at most 384 bits
@@ -120,10 +120,10 @@ namespace field_arithmetic:
 
         let (is_exp_one) = uint384_lib.eq(exp, Uint384(1, 0, 0))
         if is_exp_one == 1:
-            # If exp = 1, it is possible that `a` is not reduced mod p, 
+            # If exp = 1, it is possible that `a` is not reduced mod p,
             # so we check and reduce if necessary
             let (is_a_lt_p) = uint384_lib.lt(a, p)
-            if is_a_lt_p == 1:            
+            if is_a_lt_p == 1:
                 return (a)
             else:
                 let (quotient, remainder) = uint384_lib.unsigned_div_rem(a, p)
