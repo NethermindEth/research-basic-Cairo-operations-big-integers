@@ -1,6 +1,8 @@
 # 384-bit prime field arithmetic - Cairo
 
+We  implement the following libraries:
 
+### `field_arithmetic`
 Cairo implementation of operations between elements of a prime field $\mathbb{F}_p$ (i.e. operations modulo a prime p) with p of up to 384 bits. (Note that Cairo's native "integer" is of 251 bits)
 
 **NOTE**: Hints are pending whitelisting by StarkWare
@@ -12,7 +14,6 @@ The implemented operations are:
 - division (i.e.\ multiplication by the modular inverse) modulo p
 - exponentiation modulo p
 
-We also implement the following libraries:
 
 ### `uint384`
 This follows and extends `uint256` from Cairo's common library to 384 bits. The usage and logic is almost the same as in `uint256`. All operations from `uint256` are implemented here for 384 bits.
