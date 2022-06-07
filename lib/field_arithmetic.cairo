@@ -94,7 +94,6 @@ namespace field_arithmetic:
             b = pack(ids.b, num_bits_shift = 128)
             p = pack(ids.p, num_bits_shift = 128)
             b_inverse_mod_p = pow(b, -1, p)
-            a_div_b = (a* b_inverse_mod_p) % p
 
             b_inverse_mod_p_split = split(b_inverse_mod_p, num_bits_shift=128, length=3)
 
@@ -165,5 +164,63 @@ namespace field_arithmetic:
         else:
             return (0)
         end
+    end
+    
+    func is_square_early_exit{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(x : Uint384, p : Uint384, p_minus_one_div_2 : Uint384) -> (bool : felt):
+        alloc_locals
+        let (is_x_zero) = uint384_lib.eq(x, Uint384(0, 0, 0))
+        if is_x_zero == 1:
+            return (1)
+        end
+        #let (p_minus_one_div_2 : Uint384) = get_p_minus_one_div_2()
+        let (res : Uint384) = _is_square_inner(x, p_minus_one_div_2, p)
+        let (is_res_zero) = uint384_lib.eq(res, Uint384(0, 0, 0))
+        let (is_res_one) = uint384_lib.eq(res, Uint384(1, 0, 0))
+        if is_res_one == 1:
+            return (1)
+        else:
+            return (0)
+        end
+    end
+    
+    
+    func _is_square_inner{}(x: Uint384, pow: Uint384, p: Uint384):
+        
+        alloc_locals
+        let (is_exp_zero) = uint384_lib.eq(exp, Uint384(0, 0, 0))
+
+        if is_exp_zero == 1:
+            return (Uint384(1, 0, 0))
+        end
+
+        let (is_exp_one) = uint384_lib.eq(exp, Uint384(1, 0, 0))
+        if is_exp_one == 1:
+            # If exp = 1, it is possible that `a` is not reduced mod p,
+            # so we check and reduce if necessary
+            let (is_a_lt_p) = uint384_lib.lt(a, p)
+            if is_a_lt_p == 1:
+                return (a)
+            else:
+                let (quotient, remainder) = uint384_lib.unsigned_div_rem(a, p)
+                return (remainder)
+            end
+        end
+
+        let (exp_div_2, remainder) = uint384_lib.unsigned_div_rem(exp, Uint384(2, 0, 0))
+        let (is_remainder_zero) = uint384_lib.eq(remainder, Uint384(0, 0, 0))
+
+        if is_remainder_zero == 1:
+            # NOTE: Code is repeated in the if-else to avoid declaring a_squared as a local variable
+            let (a_squared : Uint384) = mul(a, a, p)
+            let (res) = pow(a_squared, exp_div_2, p)
+            return (res)
+        else:
+            let (a_squared : Uint384) = mul(a, a, p)
+            let (res) = pow(a_squared, exp_div_2, p)
+            let (res_mul) = mul(a, res, p)
+            return (res_mul)
+        end
+        
+        return _is_square_inner(new_x, new_pow, p)
     end
 end

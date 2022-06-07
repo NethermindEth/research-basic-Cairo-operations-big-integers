@@ -163,39 +163,15 @@ async def test_left_and_right_bitwise_shift(x, y, uint384_contract):
     execution_info = await uint384_contract.uint384_shl(x_split, y_split).call()
     result_split = execution_info.result
     result = pack(result_split[0], num_bits_shift=128)
-    assert result == (x << y) % 2**384
+    # Note that any y not less than 384 will result in a 0 after reducing modulo 2**384, so we can clip y (else python overflows)
+    assert result == (x << min(384,y)) % 2**384
 
     # sht test
     execution_info = await uint384_contract.uint384_shr(x_split, y_split).call()
     result_split = execution_info.result
     result = pack(result_split[0], num_bits_shift=128)
-    assert result == (x >> y) % 2**384
+    assert result == (x >> min(384,y)) % 2**384
 
-
-@pytest.mark.asyncio
-async def test_left_and_right_bitwise_shift_specific(uint384_contract):
-    
-    x = 47763
-    y = 88904878750163828814
-    print(x, y)
-
-    x_split = split(x, num_bits_shift=128, length=3)
-    y_split = split(y, num_bits_shift=128, length=3)
-
-    # shl test
-    execution_info = await uint384_contract.uint384_shl(x_split, y_split).call()
-    result_split = execution_info.result
-    result = pack(result_split[0], num_bits_shift=128)
-    # Standard python operations overflow here, so we use a custom function
-    #python_result = 1 #modular_multiplication(x, 2**y, 2**384)
-    assert result ==  (x << y) % 2**384
-    #assert result == python_result
-
-    # sht test
-    execution_info = await uint384_contract.uint384_shr(x_split, y_split).call()
-    result_split = execution_info.result
-    result = pack(result_split[0], num_bits_shift=128)
-    assert result == (x >> y) % 2**384
 
 # Auxiliary function used in the test above
 def modular_multiplication(a, b, mod):

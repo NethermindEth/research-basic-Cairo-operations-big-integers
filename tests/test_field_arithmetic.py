@@ -160,7 +160,7 @@ async def test_fq_is_square(field_arithmetic_contract, x):
 
 @pytest.mark.asyncio
 async def test_fq_is_square_specific(field_arithmetic_contract):
-    x = 2
+    x = 457907432207496989162399472988030533119024029361471525053059782579451265324813329538446384952613152240792785100346
     contract = field_arithmetic_contract
 
     execution_info = await contract.is_square(
