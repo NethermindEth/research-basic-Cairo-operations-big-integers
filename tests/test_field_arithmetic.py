@@ -6,6 +6,8 @@ from hypothesis import given, strategies as st, settings
 from sympy import exp_polar
 from utils import split, pack
 from utils import elliptic_curve_field_modulus as p
+from sqrt_mod_p import get_square_root_mod_p
+
 
 # Tests all functions from field_arithmetic_contract
 
@@ -179,3 +181,44 @@ async def test_fq_is_square_specific(field_arithmetic_contract):
         # Otherwise it is
         python_result = 1
     assert result == python_result
+
+
+@given(
+    x=st.integers(min_value=0, max_value=p - 1),
+)
+@settings(deadline=None)
+@pytest.mark.asyncio
+async def test_fq_get_sqrt(field_arithmetic_contract, x):
+    contract = field_arithmetic_contract
+
+    print(x)
+    
+    # 2 happens to be a generator modulo the prime we are using
+    generator = 2 
+    python_success, python_sqrt = get_square_root_mod_p(x, p)
+    
+    execution_info = await contract.get_square_root(split(x), split(p), split(generator)).call()
+
+    success = execution_info.result[0]
+    sqrt = execution_info.result[1]
+
+    sqrt = pack(sqrt)
+    
+    assert python_success == success
+
+    # Sanity check
+    alternative_python_success = pow(x, (p - 1) // 2, p)
+    if ((alternative_python_success + 1) % p) == 0:
+        # If the power is -1 mod p, then x is not a root, otherwise it is 1 if x!= 0 or 0 if x=0
+        alternative_python_success = 0
+    if x == 0:
+        # If x= 0 then x is a square
+        alternative_python_success = 1
+    assert ((alternative_python_success - success) % p) == 0
+
+    # Check that the sqrt root is correct
+    # Since there are two roots, we make two
+    if success == 1:
+        # Check that the sqrt root is correct
+        # Since there are two roots, we make two checks
+        assert (python_sqrt == sqrt) or ((-python_sqrt) % p == sqrt)

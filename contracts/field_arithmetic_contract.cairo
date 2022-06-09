@@ -54,13 +54,26 @@ func field_arithmetic_pow{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, rang
     return (res)
 end
 
+# DEPRECATED
 @view
-func is_square{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, bitwise_ptr: BitwiseBuiltin*, range_check_ptr}(
-    x : Uint384, p : Uint384, p_minus_one_div_2 : Uint384
-) -> (bool):
+func is_square_non_optimized{
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, bitwise_ptr : BitwiseBuiltin*, range_check_ptr
+}(x : Uint384, p : Uint384, p_minus_one_div_2 : Uint384) -> (bool):
     alloc_locals
 
-    let (bool) = field_arithmetic.is_square(x, p, p_minus_one_div_2)
+    let (bool) = field_arithmetic.is_square_non_optimized(x, p, p_minus_one_div_2)
 
     return (bool)
+end
+
+# generator : generator of F_p
+@view
+func get_square_root{
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, bitwise_ptr : BitwiseBuiltin*, range_check_ptr
+}(x : Uint384, p : Uint384, generator: Uint384) -> (bool, res : Uint384):
+    alloc_locals
+
+    let (bool, res : Uint384) = field_arithmetic.get_square_root(x, p, generator)
+
+    return (bool, res)
 end
