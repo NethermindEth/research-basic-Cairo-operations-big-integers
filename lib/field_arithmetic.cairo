@@ -79,7 +79,7 @@ namespace field_arithmetic:
         alloc_locals
         local b_inverse_mod_p : Uint384
         %{
-            from starkware.cairo.common.math_utils import div_mod
+            from starkware.python.math_utils import div_mod
             
             def split(num: int, num_bits_shift: int, length: int):
                 a = []
@@ -357,5 +357,13 @@ namespace field_arithmetic:
         else:
             return (1, sqrt_x)
         end
+    end
+    
+    # TODO: not tested
+    # TODO: We should create a struct `FQ` to represent Uint384's reduced modulo p
+    # RIght now thid function expects a and be to be between 0 and p-1
+    func eq{rarange_check_ptr}(a: Uint384, b : Uint384):
+        let (is_a_eq_b) = uint384_lib.eq(a,b)
+        return (is_a_eq_b)
     end
 end

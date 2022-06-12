@@ -12,6 +12,13 @@ from sqrt_mod_p import get_square_root_mod_p
 
 # Tests all functions from field_arithmetic_contract
 
+"""
+FAILED tests/test_field_arithmetic.py::test_field_arithmetic_div - starkware.starkware_utils.error_handling.StarkException: (500...
+FAILED tests/test_field_arithmetic.py::test_fq_is_square - AttributeError: 'StarknetContract' object has no attribute 'is_square'
+FAILED tests/test_field_arithmetic.py::test_fq_is_square_specific - AttributeError: 'StarknetContract' object has no attribute '...
+FAILED tests/test_uint384.py::test_signed_comparison_functions - assert True == (-52399423255656892...8034360846353810651 < -571...
+====================================== 4 failed, 20 passed, 6 warnings in 7589.29s (2:06:29) ======================================
+"""
 
 @given(
     x=st.integers(min_value=1, max_value=2**384 - 1),
@@ -110,7 +117,7 @@ async def test_field_arithmetic_div(x, y, field_arithmetic_contract):
     # inverse= = pow(b, -1, p)
     # Instead we use the python3.7-friendly function div_mod from starkware.cairo.common.math_utils
     y_inverse = div_mod(1, y, p)
-    assert result == (x * y) % p
+    assert result == (x * y_inverse) % p
 
 
 @given(
@@ -148,7 +155,7 @@ async def test_fq_is_square(field_arithmetic_contract, x):
     print(x)
     contract = field_arithmetic_contract
 
-    execution_info = await contract.is_square(
+    execution_info = await contract.is_square_non_optimized(
         split(x, 128, 3), split(p, 128, 3), split(p_minus_one_div_2, 128, 3)
     ).call()
 
@@ -170,7 +177,7 @@ async def test_fq_is_square_specific(field_arithmetic_contract):
     x = 457907432207496989162399472988030533119024029361471525053059782579451265324813329538446384952613152240792785100346
     contract = field_arithmetic_contract
 
-    execution_info = await contract.is_square(
+    execution_info = await contract.is_square_non_optimized(
         split(x, 128, 3), split(p, 128, 3), split(p_minus_one_div_2, 128, 3)
     ).call()
 
