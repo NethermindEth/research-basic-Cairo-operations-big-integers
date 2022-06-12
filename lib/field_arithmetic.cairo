@@ -341,15 +341,12 @@ namespace field_arithmetic:
             let (check_x) = uint384_lib.eq(x, sqrt_root_x_squared)
             assert check_x = 1
         else:
-            # In this case success_gx = 1 (TODO: should we check this here?)
+            # In this case success_gx = 1 
             let (sqrt_root_gx_squared : Uint384) = mul(sqrt_root_gx, sqrt_root_gx, p)
             let (check_gx) = uint384_lib.eq(gx, sqrt_root_gx_squared)
             assert check_gx = 1
         end
 
-
-
-        # TODO: double check that nothing else needs to be checked
 
         # Return the appropriate values
         if success_x == 0:
