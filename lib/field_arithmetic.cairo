@@ -178,16 +178,17 @@ namespace field_arithmetic:
 
     # Finds a square of x in F_p, i.e. x ≅ y**2 (mod p) for some y
     # To do so, the following is done in a hint:
+    # 0. Assume x is not  0 mod p
     # 1. Check if x is a square, if yes, find a square root r of it
-    # 2. If no, then gx *is* a square (for g a generator of F_p^*), so find a square root r of it
+    # 2. If (and only if not), then gx *is* a square (for g a generator of F_p^*), so find a square root r of it
     # 3. Check in Cairo that r**2 = x (mod p) or r**2 = gx (mod p), respectively
-
     # NOTE: The function assumes that 0 <= x < p
     func get_square_root{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(
         x : Uint384, p : Uint384, generator : Uint384
     ) -> (success : felt, res : Uint384):
         alloc_locals
-
+        
+        # TODO: Create an equality function within field_arithmetic to avoid overflow bugs
         let (is_zero) = uint384_lib.eq(x, Uint384(0, 0, 0))
         if is_zero == 1:
             return (1, Uint384(0, 0, 0))
@@ -195,8 +196,8 @@ namespace field_arithmetic:
 
         local success_x : felt
         local success_gx : felt
-        local sqrt_root_x : Uint384
-        local sqrt_root_gx : Uint384
+        local sqrt_x : Uint384
+        local sqrt_gx : Uint384
 
         # Compute square roots in a hint
         %{
@@ -324,26 +325,26 @@ namespace field_arithmetic:
             ids.success_gx =success_gx
             split_root_x = split(root_x)
             split_root_gx = split(root_gx)
-            ids.sqrt_root_x.d0 = split_root_x[0]
-            ids.sqrt_root_x.d1 = split_root_x[1]
-            ids.sqrt_root_x.d2 = split_root_x[2]
-            ids.sqrt_root_gx.d0 = split_root_gx[0]
-            ids.sqrt_root_gx.d1 = split_root_gx[1]
-            ids.sqrt_root_gx.d2 = split_root_gx[2]
+            ids.sqrt_x.d0 = split_root_x[0]
+            ids.sqrt_x.d1 = split_root_x[1]
+            ids.sqrt_x.d2 = split_root_x[2]
+            ids.sqrt_gx.d0 = split_root_gx[0]
+            ids.sqrt_gx.d1 = split_root_gx[1]
+            ids.sqrt_gx.d2 = split_root_gx[2]
         %}
 
         # Verify that the values computed in the hint are what they are supposed to be
-        # 4 happens to be a
         let (gx : Uint384) = mul(generator, x, p)
         if success_x==1:
-            let (sqrt_root_x_squared : Uint384) = mul(sqrt_root_x, sqrt_root_x, p)
+            let (sqrt_x_squared : Uint384) = mul(sqrt_x, sqrt_x, p)
             # Note these checks may fail if the input x does not satisfy 0<= x < p
-            let (check_x) = uint384_lib.eq(x, sqrt_root_x_squared)
+            # TODO: Create a equality function within field_arithmetic to avoid overflow bugs
+            let (check_x) = uint384_lib.eq(x, sqrt_x_squared)
             assert check_x = 1
         else:
             # In this case success_gx = 1 
-            let (sqrt_root_gx_squared : Uint384) = mul(sqrt_root_gx, sqrt_root_gx, p)
-            let (check_gx) = uint384_lib.eq(gx, sqrt_root_gx_squared)
+            let (sqrt_gx_squared : Uint384) = mul(sqrt_gx, sqrt_gx, p)
+            let (check_gx) = uint384_lib.eq(gx, sqrt_gx_squared)
             assert check_gx = 1
         end
 
@@ -354,7 +355,7 @@ namespace field_arithmetic:
             # Note that Uint384(0, 0, 0) is not a square root here, but something needs to be returned
             return (0, Uint384(0, 0, 0))
         else:
-            return (1, sqrt_root_x)
+            return (1, sqrt_x)
         end
     end
 end
