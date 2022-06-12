@@ -2,6 +2,7 @@ import os
 
 import pytest
 from starkware.starknet.testing.starknet import Starknet
+from starkware.python.math_utils import div_mod
 from hypothesis import given, strategies as st, settings
 from sympy import exp_polar
 from utils import split, pack
@@ -104,8 +105,12 @@ async def test_field_arithmetic_div(x, y, field_arithmetic_contract):
     ).call()
     result_split = execution_info.result
     result = pack(result_split[0], num_bits_shift=128)
-
-    assert result == (x * pow(y, -1, p)) % p
+    
+    # For python3.8 and above the modular inverse can be computed as follows:
+    # inverse= = pow(b, -1, p)
+    # Instead we use the python3.7-friendly function div_mod from starkware.cairo.common.math_utils
+    y_inverse = div_mod(1, y, p)
+    assert result == (x * y) % p
 
 
 @given(

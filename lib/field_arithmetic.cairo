@@ -79,6 +79,8 @@ namespace field_arithmetic:
         alloc_locals
         local b_inverse_mod_p : Uint384
         %{
+            from starkware.cairo.common.math_utils import div_mod
+            
             def split(num: int, num_bits_shift: int, length: int):
                 a = []
                 for _ in range(length):
@@ -93,7 +95,11 @@ namespace field_arithmetic:
             a = pack(ids.a, num_bits_shift = 128)
             b = pack(ids.b, num_bits_shift = 128)
             p = pack(ids.p, num_bits_shift = 128)
-            b_inverse_mod_p = pow(b, -1, p)
+            # For python3.8 and above the modular inverse can be computed as follows:
+            # b_inverse_mod_p = pow(b, -1, p)
+            # Instead we use the python3.7-friendly function div_mod from starkware.cairo.common.math_utils
+            b_inverse_mod_p = div_mod(1, b, p)
+
 
             b_inverse_mod_p_split = split(b_inverse_mod_p, num_bits_shift=128, length=3)
 
