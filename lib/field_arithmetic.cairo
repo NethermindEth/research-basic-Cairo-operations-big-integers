@@ -366,4 +366,15 @@ namespace field_arithmetic:
         let (is_a_eq_b) = uint384_lib.eq(a,b)
         return (is_a_eq_b)
     end
+
+    # TODO: not tested
+    func is_zero(a: Uint384) -> (bool: felt):
+        let (is_a_zero) = uint384_lib.is_zero(a)
+        if is_a_zero == 1:
+            return (1)
+        else:
+            return (0)
+        end
+    end
+    
 end
