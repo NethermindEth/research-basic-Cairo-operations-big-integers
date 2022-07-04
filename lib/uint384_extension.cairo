@@ -30,7 +30,7 @@ namespace uint384_extension_lib:
         let a_low = Uint384(d0=a.d0, d1=a.d1, d2=a.d2)
         let a_high = Uint384(d0=a.d3, d1=a.d4, d2=a.d5)
 
-        let (sum_low, carry0) = uint384_lib.add(a_low, b)
+        let (sum_low, carry0) = uint384_lib.addition(a_low, b)
 
         local res : Uint768
 
@@ -38,7 +38,7 @@ namespace uint384_extension_lib:
         res.d1 = sum_low.d1
         res.d2 = sum_low.d2
 
-        let (a_high_plus_carry, carry1) = uint384_lib.add(a_high, Uint384(carry0, 0, 0))
+        let (a_high_plus_carry, carry1) = uint384_lib.addition(a_high, Uint384(carry0, 0, 0))
 
         res.d3 = a_high_plus_carry.d0
         res.d4 = a_high_plus_carry.d1
@@ -60,13 +60,13 @@ namespace uint384_extension_lib:
         let (low_low, low_high) = uint384_lib.mul(a_low, b)
         let (high_low, high_high) = uint384_lib.mul(a_high, b)
 
-        let (sum_low_high_and_high_low : Uint384, carry0 : felt) = uint384_lib.add(
+        let (sum_low_high_and_high_low : Uint384, carry0 : felt) = uint384_lib.addition(
             low_high, high_low
         )
 
         assert_le(carry0, 2)
 
-        let (high_high_with_carry : Uint384, carry1 : felt) = uint384_lib.add(
+        let (high_high_with_carry : Uint384, carry1 : felt) = uint384_lib.addition(
             high_high, Uint384(carry0, 0, 0)
         )
         assert carry1 = 0

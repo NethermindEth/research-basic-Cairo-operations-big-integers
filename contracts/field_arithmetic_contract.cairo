@@ -14,7 +14,7 @@ from lib.field_arithmetic import field_arithmetic
 func field_arithmetic_add{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     a : Uint384, b : Uint384, p : Uint384
 ) -> (res : Uint384):
-    let (res : Uint384) = field_arithmetic.add(a, b, p)
+    let (res : Uint384) = field_arithmetic.addition(a, b, p)
     return (res)
 end
 
