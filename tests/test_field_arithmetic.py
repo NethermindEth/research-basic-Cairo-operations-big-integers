@@ -115,7 +115,7 @@ async def test_field_arithmetic_div(x, y, field_arithmetic_contract):
     
     # For python3.8 and above the modular inverse can be computed as follows:
     # inverse= = pow(b, -1, p)
-    # Instead we use the python3.7-friendly function div_mod from starkware.cairo.common.math_utils
+    # Instead we use the python3.7-friendly function div_mod from starkware.python.math_utils
     y_inverse = div_mod(1, y, p)
     assert result == (x * y_inverse) % p
 

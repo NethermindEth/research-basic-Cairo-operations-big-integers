@@ -12,8 +12,8 @@ from lib.uint384_extension import uint384_extension_lib, Uint768
 
 namespace field_arithmetic:
     # Computes (a + b) modulo p .
-    func add{range_check_ptr}(a : Uint384, b : Uint384, p : Uint384) -> (res : Uint384):
-        let (sum : Uint384, carry) = uint384_lib.add(a, b)
+    func addition{range_check_ptr}(a : Uint384, b : Uint384, p : Uint384) -> (res : Uint384):
+        let (sum : Uint384, carry) = uint384_lib.addition(a, b)
         let sum_with_carry : Uint768 = Uint768(sum.d0, sum.d1, sum.d2, carry, 0, 0)
 
         let (quotient : Uint768,
@@ -57,7 +57,7 @@ namespace field_arithmetic:
             ids.res.d1 = res_split[1]
             ids.res.d2 = res_split[2]
         %}
-        let (b_plus_res) = add(b, res, p)
+        let (b_plus_res) = addition(b, res, p)
         assert b_plus_res = a
         return (res)
     end
@@ -201,6 +201,8 @@ namespace field_arithmetic:
 
         # Compute square roots in a hint
         %{
+            from starkware.python.math_utils import is_quad_residue, sqrt
+            
             def split(num: int, num_bits_shift: int = 128, length: int = 3):
                 a = []
                 for _ in range(length):
@@ -212,105 +214,16 @@ namespace field_arithmetic:
                 limbs = (z.d0, z.d1, z.d2)
                 return sum(limb << (num_bits_shift * i) for i, limb in enumerate(limbs))
 
-            def get_square_root_mod_p(a, p):
-                """ Find a quadratic residue (mod p) of 'a'. p
-                    must be an odd prime.
-
-                    Solve the congruence of the form:
-                        x^2 = a (mod p)
-                    And returns (success, x). Note that p - x is also a root.
-
-                    success = 0, 1 depending on whether a solution was found or not
-
-                    The Tonelli-Shanks algorithm is used (except
-                    for some simple cases in which the solution
-                    is known from an identity). This algorithm
-                    runs in polynomial time (unless the
-                    generalized Riemann hypothesis is false).
-                """
-                # Simple cases
-                #
-                if a == 0:
-                    return 1, 0
-                if legendre_symbol(a, p) != 1:
-                    return 0, None
-                elif p == 2:
-                    return 0, None
-                elif p % 4 == 3:
-                    return 1, pow(a, (p+1)//4, p)
-
-                # Partition p-1 to s * 2^e for an odd s (i.e.
-                # reduce all the powers of 2 from p-1)
-                #
-                s = p - 1
-                e = 0
-                while s % 2 == 0:
-                    s /= 2
-                    e += 1
-
-                # Find some 'n' with a legendre symbol n|p = -1.
-                # Shouldn't take long.
-                #
-                n = 2
-                while legendre_symbol(n, p) != -1:
-                    n += 1
-
-                # Here be dragons!
-                # Read the paper "Square roots from 1; 24, 51,
-                # 10 to Dan Shanks" by Ezra Brown for more
-                # information
-                #
-
-                # x is a guess of the square root that gets better
-                # with each iteration.
-                # b is the "fudge factor" - by how much we're off
-                # with the guess. The invariant x^2 = ab (mod p)
-                # is maintained throughout the loop.
-                # g is used for successive powers of n to update
-                # both a and b
-                # r is the exponent - decreases with each update
-                #
-                x = pow(a, (s+1)//2, p)
-                b = pow(a, s, p)
-                g = pow(n, s, p)
-                r = e
-
-                while True:
-                    t = b
-                    m = 0
-                    for m in range(r):
-                        if t == 1:
-                            break
-                        t = pow(t, 2, p)
-
-                    if m == 0:
-                        return 1, x
-
-                    gs = pow(g, 2 ** (r - m - 1), p)
-                    g = (gs * gs) % p
-                    x = (x * gs) % p
-                    b = (b * g) % p
-                    r = m
-
-
-            def legendre_symbol(a, p):
-                """ Compute the Legendre symbol a|p using
-                    Euler's criterion. p is a prime, a is
-                    relatively prime to p (if p divides
-                    a, then a|p = 0)
-
-                    Returns 1 if a has a square root modulo
-                    p, -1 otherwise.
-                """
-                ls = pow(a, (p-1)//2, p)
-                return -1 if ls == p - 1 else ls
 
             generator = pack(ids.generator)
             x = pack(ids.x)
             p = pack(ids.p)
-
-            (success_x, root_x) = get_square_root_mod_p(x, p)
-            (success_gx, root_gx) = get_square_root_mod_p(generator*x, p)
+            
+            success_x = is_quad_residue(x, p)
+            root_x = sqrt(x, p) if success_x else None
+                
+            success_gx = is_quad_residue(generator*x, p)
+            root_gx = sqrt(generator*x, p) if success_gx else None
 
             # Check that one is 0 and the other is 1
             if x != 0:
@@ -362,13 +275,13 @@ namespace field_arithmetic:
     # TODO: not tested
     # TODO: We should create a struct `FQ` to represent Uint384's reduced modulo p
     # RIght now thid function expects a and be to be between 0 and p-1
-    func eq{rarange_check_ptr}(a: Uint384, b : Uint384):
+    func eq{range_check_ptr}(a: Uint384, b : Uint384):
         let (is_a_eq_b) = uint384_lib.eq(a,b)
         return (is_a_eq_b)
     end
 
     # TODO: not tested
-    func is_zero(a: Uint384) -> (bool: felt):
+    func is_zero{range_check_ptr}(a: Uint384) -> (bool: felt):
         let (is_a_zero) = uint384_lib.is_zero(a)
         if is_a_zero == 1:
             return (1)
