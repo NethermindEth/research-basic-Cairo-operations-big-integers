@@ -14,7 +14,7 @@ from lib.field_arithmetic import field_arithmetic
 func field_arithmetic_add{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     a : Uint384, b : Uint384, p : Uint384
 ) -> (res : Uint384):
-    let (res : Uint384) = field_arithmetic.addition(a, b, p)
+    let (res : Uint384) = field_arithmetic.add(a, b, p)
     return (res)
 end
 
@@ -70,12 +70,10 @@ end
 @view
 func get_square_root{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, bitwise_ptr : BitwiseBuiltin*, range_check_ptr
-}(x : Uint384, p : Uint384, generator: Uint384) -> (bool, res : Uint384):
+}(x : Uint384, p : Uint384, generator : Uint384) -> (bool, res : Uint384):
     alloc_locals
 
     let (bool, res : Uint384) = field_arithmetic.get_square_root(x, p, generator)
 
     return (bool, res)
 end
-
-

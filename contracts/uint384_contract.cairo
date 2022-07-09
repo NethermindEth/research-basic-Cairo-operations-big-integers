@@ -10,7 +10,7 @@ from lib.uint384 import uint384_lib, Uint384
 # Adds two integers. Returns the result as a 384-bit integer and the (1-bit) carry.
 @view
 func uint384_add{range_check_ptr}(a : Uint384, b : Uint384) -> (res : Uint384, carry : felt):
-    let (res : Uint384, carry : felt) = uint384_lib.addition(a, b)
+    let (res : Uint384, carry : felt) = uint384_lib.add(a, b)
     return (res, carry)
 end
 
@@ -118,7 +118,7 @@ end
 func uint384_and{bitwise_ptr : BitwiseBuiltin*, range_check_ptr}(a : Uint384, b : Uint384) -> (
     res : Uint384
 ):
-    let (res) = uint384_lib.and(a, b)
+    let (res) = uint384_lib.bit_and(a, b)
     return (res)
 end
 

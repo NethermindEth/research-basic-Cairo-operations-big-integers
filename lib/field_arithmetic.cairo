@@ -12,8 +12,8 @@ from lib.uint384_extension import uint384_extension_lib, Uint768
 
 namespace field_arithmetic:
     # Computes (a + b) modulo p .
-    func addition{range_check_ptr}(a : Uint384, b : Uint384, p : Uint384) -> (res : Uint384):
-        let (sum : Uint384, carry) = uint384_lib.addition(a, b)
+    func add{range_check_ptr}(a : Uint384, b : Uint384, p : Uint384) -> (res : Uint384):
+        let (sum : Uint384, carry) = uint384_lib.add(a, b)
         let sum_with_carry : Uint768 = Uint768(sum.d0, sum.d1, sum.d2, carry, 0, 0)
 
         let (quotient : Uint768,
@@ -57,7 +57,7 @@ namespace field_arithmetic:
             ids.res.d1 = res_split[1]
             ids.res.d2 = res_split[2]
         %}
-        let (b_plus_res) = addition(b, res, p)
+        let (b_plus_res) = add(b, res, p)
         assert b_plus_res = a
         return (res)
     end
@@ -80,7 +80,7 @@ namespace field_arithmetic:
         local b_inverse_mod_p : Uint384
         %{
             from starkware.python.math_utils import div_mod
-            
+
             def split(num: int, num_bits_shift: int, length: int):
                 a = []
                 for _ in range(length):
@@ -97,7 +97,7 @@ namespace field_arithmetic:
             p = pack(ids.p, num_bits_shift = 128)
             # For python3.8 and above the modular inverse can be computed as follows:
             # b_inverse_mod_p = pow(b, -1, p)
-            # Instead we use the python3.7-friendly function div_mod from starkware.cairo.common.math_utils
+            # Instead we use the python3.7-friendly function div_mod from starkware.python.math_utils
             b_inverse_mod_p = div_mod(1, b, p)
 
 
@@ -151,8 +151,7 @@ namespace field_arithmetic:
             return (res_mul)
         end
     end
-    
-    
+
     # WARNING: Will be deprecated
     # Checks if x is a square in F_q, i.e. x ≅ y**2 (mod q) for some y
     # `p_minus_one_div_2` is (p-1)/2. It is passed as an argument rather than computed, since for most applications
@@ -187,7 +186,7 @@ namespace field_arithmetic:
         x : Uint384, p : Uint384, generator : Uint384
     ) -> (success : felt, res : Uint384):
         alloc_locals
-        
+
         # TODO: Create an equality function within field_arithmetic to avoid overflow bugs
         let (is_zero) = uint384_lib.eq(x, Uint384(0, 0, 0))
         if is_zero == 1:
@@ -202,7 +201,7 @@ namespace field_arithmetic:
         # Compute square roots in a hint
         %{
             from starkware.python.math_utils import is_quad_residue, sqrt
-            
+
             def split(num: int, num_bits_shift: int = 128, length: int = 3):
                 a = []
                 for _ in range(length):
@@ -218,7 +217,7 @@ namespace field_arithmetic:
             generator = pack(ids.generator)
             x = pack(ids.x)
             p = pack(ids.p)
-            
+
             success_x = is_quad_residue(x, p)
             root_x = sqrt(x, p) if success_x else None
                 
@@ -234,8 +233,8 @@ namespace field_arithmetic:
                 root_x = 0
             if root_gx == None:
                 root_gx = 0
-            ids.success_x = success_x
-            ids.success_gx =success_gx
+            ids.success_x = int(success_x)
+            ids.success_gx = int(success_gx)
             split_root_x = split(root_x)
             split_root_gx = split(root_gx)
             ids.sqrt_x.d0 = split_root_x[0]
@@ -248,19 +247,18 @@ namespace field_arithmetic:
 
         # Verify that the values computed in the hint are what they are supposed to be
         let (gx : Uint384) = mul(generator, x, p)
-        if success_x==1:
+        if success_x == 1:
             let (sqrt_x_squared : Uint384) = mul(sqrt_x, sqrt_x, p)
             # Note these checks may fail if the input x does not satisfy 0<= x < p
             # TODO: Create a equality function within field_arithmetic to avoid overflow bugs
             let (check_x) = uint384_lib.eq(x, sqrt_x_squared)
             assert check_x = 1
         else:
-            # In this case success_gx = 1 
+            # In this case success_gx = 1
             let (sqrt_gx_squared : Uint384) = mul(sqrt_gx, sqrt_gx, p)
             let (check_gx) = uint384_lib.eq(gx, sqrt_gx_squared)
             assert check_gx = 1
         end
-
 
         # Return the appropriate values
         if success_x == 0:
@@ -271,17 +269,17 @@ namespace field_arithmetic:
             return (1, sqrt_x)
         end
     end
-    
+
     # TODO: not tested
     # TODO: We should create a struct `FQ` to represent Uint384's reduced modulo p
     # RIght now thid function expects a and be to be between 0 and p-1
-    func eq{range_check_ptr}(a: Uint384, b : Uint384):
-        let (is_a_eq_b) = uint384_lib.eq(a,b)
+    func eq{range_check_ptr}(a : Uint384, b : Uint384) -> (res : felt):
+        let (is_a_eq_b) = uint384_lib.eq(a, b)
         return (is_a_eq_b)
     end
 
     # TODO: not tested
-    func is_zero{range_check_ptr}(a: Uint384) -> (bool: felt):
+    func is_zero{range_check_ptr}(a : Uint384) -> (bool : felt):
         let (is_a_zero) = uint384_lib.is_zero(a)
         if is_a_zero == 1:
             return (1)
@@ -289,5 +287,4 @@ namespace field_arithmetic:
             return (0)
         end
     end
-    
 end

@@ -37,7 +37,7 @@ namespace uint384_lib:
     # Arithmetics.
 
     # Adds two integers. Returns the result as a 384-bit integer and the (1-bit) carry.
-    func addition{range_check_ptr}(a : Uint384, b : Uint384) -> (res : Uint384, carry : felt):
+    func add{range_check_ptr}(a : Uint384, b : Uint384) -> (res : Uint384, carry : felt):
         alloc_locals
         local res : Uint384
         local carry_d0 : felt
@@ -115,13 +115,10 @@ namespace uint384_lib:
         )
     end
 
-
-
-
     # Multiplies two integers. Returns the result as two 256-bit integers (low and high parts).
     # func mul{range_check_ptr}(a : Uint384, b : Uint384) -> (low : Uint384, high : Uint384):
     #     alloc_locals
-# 
+    #
     #     let (res0, carry) = split_128(a.d0 * b.d0)
     #     let (res1, carry) = split_128(a.d1 * b.d0 + a.d0 * b.d1 + carry)
     #     let (res2, carry) = split_128(a.d2 * b.d0 + a.d1 * b.d1  + a.d0 * b.d2 + carry)
@@ -129,7 +126,6 @@ namespace uint384_lib:
     #     let (res4, carry) = split_128(a.d2 * b.d2  + carry)
     #     return (low=Uint384(d0=res0, d1=res1, d2 = res2), high=Uint384(d0=res3, d1=res4, d2=carry))
     # end
-
 
     # Returns the floor value of the square root of a Uint384 integer.
     func sqrt{range_check_ptr}(a : Uint384) -> (res : Uint384):
@@ -139,7 +135,7 @@ namespace uint384_lib:
 
         %{
             from starkware.python.math_utils import isqrt
-            
+
             def split(num: int, num_bits_shift: int, length: int):
                 a = []
                 for _ in range(length):
@@ -177,7 +173,7 @@ namespace uint384_lib:
         # Verify that n <= (root+1)**2 - 1.
         # In the case where root = 2**192 - 1, we will have next_root_squared=0, since
         # (root+1)**2 = 2**384. Therefore next_root_squared - 1 = 2**384 - 1, as desired.
-        let (next_root, add_carry) = addition(root, Uint384(1, 0, 0))
+        let (next_root, add_carry) = add(root, Uint384(1, 0, 0))
         assert add_carry = 0
         let (next_root_squared, _) = mul(next_root, next_root)
         let (next_root_squared_minus_one) = sub(next_root_squared, Uint384(1, 0, 0))
@@ -200,8 +196,8 @@ namespace uint384_lib:
 
     # Returns 1 if the first signed integer is less than the second signed integer.
     func signed_lt{range_check_ptr}(a : Uint384, b : Uint384) -> (res):
-        let (a, _) = addition(a, Uint384(d0=0, d1=0, d2=2 ** 127))
-        let (b, _) = addition(b, Uint384(d0=0, d1=0, d2=2 ** 127))
+        let (a, _) = add(a, Uint384(d0=0, d1=0, d2=2 ** 127))
+        let (b, _) = add(b, Uint384(d0=0, d1=0, d2=2 ** 127))
         return lt(a, b)
     end
 
@@ -290,7 +286,7 @@ namespace uint384_lib:
         let (res_mul : Uint384, carry : Uint384) = mul(quotient, div)
         assert carry = Uint384(0, 0, 0)
 
-        let (check_val : Uint384, add_carry : felt) = addition(res_mul, remainder)
+        let (check_val : Uint384, add_carry : felt) = add(res_mul, remainder)
         assert check_val = a
         assert add_carry = 0
 
@@ -308,7 +304,7 @@ namespace uint384_lib:
     # Note that the negation of -2**383 is -2**383.
     func neg{range_check_ptr}(a : Uint384) -> (res : Uint384):
         let (not_num) = not(a)
-        let (res, _) = addition(not_num, Uint384(d0=1, d1=0, d2=0))
+        let (res, _) = add(not_num, Uint384(d0=1, d1=0, d2=0))
         return (res)
     end
 
@@ -370,7 +366,7 @@ namespace uint384_lib:
     # Subtracts two integers. Returns the result as a 384-bit integer.
     func sub{range_check_ptr}(a : Uint384, b : Uint384) -> (res : Uint384):
         let (b_neg) = neg(b)
-        let (res, _) = addition(a, b_neg)
+        let (res, _) = add(a, b_neg)
         return (res)
     end
 
@@ -387,7 +383,7 @@ namespace uint384_lib:
         end
         return (1)
     end
-    
+
     # Return true if a = 0
     func is_zero{range_check_ptr}(a : Uint384) -> (res : felt):
         let (is_a_zero) = eq(a, Uint384(0, 0, 0))
@@ -408,8 +404,9 @@ namespace uint384_lib:
         return (Uint384(d0, d1, d2))
     end
 
-    # Computes the bitwise AND of 2 uint256 integers.
-    func and{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(a : Uint384, b : Uint384) -> (
+    # Computes the bitwise AND of 2 uint384 integers.
+    # NOTE: `and` will be a reserved word in future Cairo versions, so we cannot call this function `and`
+    func bit_and{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(a : Uint384, b : Uint384) -> (
         res : Uint384
     ):
         let (d0) = bitwise_and(a.d0, b.d0)
@@ -418,7 +415,7 @@ namespace uint384_lib:
         return (Uint384(d0, d1, d2))
     end
 
-    # Computes the bitwise OR of 2 uint256 integers.
+    # Computes the bitwise OR of 2 uint384 integers.
     func or{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(a : Uint384, b : Uint384) -> (
         res : Uint384
     ):
