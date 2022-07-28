@@ -16,10 +16,9 @@ namespace field_arithmetic:
         let (sum : Uint384, carry) = uint384_lib.add(a, b)
         let sum_with_carry : Uint768 = Uint768(sum.d0, sum.d1, sum.d2, carry, 0, 0)
 
-        let (quotient : Uint768,
-            remainder : Uint384) = uint384_extension_lib.unsigned_div_rem_uint768_by_uint384(
-            sum_with_carry, p
-        )
+        let (
+            quotient : Uint768, remainder : Uint384
+        ) = uint384_extension_lib.unsigned_div_rem_uint768_by_uint384(sum_with_carry, p)
         return (remainder)
     end
 
@@ -64,12 +63,55 @@ namespace field_arithmetic:
 
     # Computes a * b modulo p
     func mul{range_check_ptr}(a : Uint384, b : Uint384, p : Uint384) -> (res : Uint384):
+        alloc_locals
+        local remainder : Uint384
+        local quotient : Uint384
+        %{
+            def split(num: int, num_bits_shift: int, length: int):
+                a = []
+                for _ in range(length):
+                    a.append( num & ((1 << num_bits_shift) - 1) )
+                    num = num >> num_bits_shift 
+                return tuple(a)
+
+            def pack(z, num_bits_shift: int = 128) -> int:
+                limbs = (z.d0, z.d1, z.d2)
+                return sum(limb << (num_bits_shift * i) for i, limb in enumerate(limbs))
+
+            a = pack(ids.a, num_bits_shift = 128)
+            b = pack(ids.b, num_bits_shift = 128)
+            p = pack(ids.p, num_bits_shift = 128)
+
+            quotient, remainder = divmod(a * b, p)
+
+
+            res_split = split(remainder, num_bits_shift=128, length=3)
+
+            ids.remainder.d0 = res_split[0]
+            ids.remainder.d1 = res_split[1]
+            ids.remainder.d2 = res_split[2]
+
+            res_split = split(quotient, num_bits_shift=128, length=3)
+
+            ids.quotient.d0 = res_split[0]
+            ids.quotient.d1 = res_split[1]
+            ids.quotient.d2 = res_split[2]
+        %}
+
         let (low : Uint384, high : Uint384) = uint384_lib.mul(a, b)
-        let full_mul_result : Uint768 = Uint768(low.d0, low.d1, low.d2, high.d0, high.d1, high.d2)
-        let (quotient : Uint768,
-            remainder : Uint384) = uint384_extension_lib.unsigned_div_rem_uint768_by_uint384(
-            full_mul_result, p
-        )
+        let (low_2 : Uint384, high_2 : Uint384) = uint384_lib.mul(p, quotient)
+
+        let (res : Uint384, carry : felt) = uint384_lib.add(low_2, remainder)
+        let (res2 : Uint384, _ : Uint384) = uint384_lib.add(high_2, Uint384(d0=carry, d1=0, d2=0))
+
+        assert low.d0 = res.d0
+        assert low.d1 = res.d1
+        assert low.d2 = res.d2
+
+        assert high.d0 = res2.d0
+        assert high.d1 = res2.d1
+        assert high.d2 = res2.d2
+
         return (remainder)
     end
 
