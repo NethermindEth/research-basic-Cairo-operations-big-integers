@@ -26,20 +26,20 @@ async def starknet_factory():
 async def uint384_contract(starknet_factory):
     starknet = starknet_factory
     # Deploy the account contract
-    contract_def = compile_starknet_files(
+    contract_class = compile_starknet_files(
         files=[UINT384_CONTRACT], disable_hint_validation=True
     )
-    contract = await starknet.deploy(contract_def=contract_def)
+    contract = await starknet.deploy(contract_class=contract_class)
     return contract
 
 @pytest.fixture(scope="module")
 async def uint384_extension_contract(starknet_factory):
     starknet = starknet_factory
     # Deploy the account contract
-    contract_def = compile_starknet_files(
+    contract_class = compile_starknet_files(
         files=[UINT384_EXTENSION_CONTRACT], disable_hint_validation=True
     )
-    contract = await starknet.deploy(contract_def=contract_def)
+    contract = await starknet.deploy(contract_class=contract_class)
     return contract
 
 
@@ -47,8 +47,8 @@ async def uint384_extension_contract(starknet_factory):
 async def field_arithmetic_contract(starknet_factory):
     starknet = starknet_factory
     # Deploy the account contract
-    contract_def = compile_starknet_files(
+    contract_class = compile_starknet_files(
         files=[FIELD_ARITHMETIC_CONTRACT], disable_hint_validation=True
     )
-    contract = await starknet.deploy(contract_def=contract_def)
+    contract = await starknet.deploy(contract_class=contract_class)
     return contract

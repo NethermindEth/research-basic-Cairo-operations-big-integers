@@ -42,7 +42,6 @@ async def test_field_arithmetic_add(x, y, field_arithmetic_contract):
 
     assert result == (x + y) % p
 
-
 @given(
     x=st.integers(min_value=1, max_value=2**384 - 1),
     y=st.integers(min_value=1, max_value=2**384 - 1),
@@ -71,8 +70,8 @@ async def test_field_arithmetic_sub(x, y, field_arithmetic_contract):
 
 
 @given(
-    x=st.integers(min_value=1, max_value=2**384 - 1),
-    y=st.integers(min_value=1, max_value=2**384 - 1),
+    x=st.integers(min_value=1, max_value=p - 1),
+    y=st.integers(min_value=1, max_value=p - 1),
 )
 @settings(deadline=None)
 @pytest.mark.asyncio
