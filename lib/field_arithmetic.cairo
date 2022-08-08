@@ -37,7 +37,7 @@ namespace field_arithmetic:
                 a = []
                 for _ in range(length):
                     a.append( num & ((1 << num_bits_shift) - 1) )
-                    num = num >> num_bits_shift 
+                    num = num >> num_bits_shift
                 return tuple(a)
 
             def pack(z, num_bits_shift: int) -> int:
@@ -85,7 +85,7 @@ namespace field_arithmetic:
                 a = []
                 for _ in range(length):
                     a.append( num & ((1 << num_bits_shift) - 1) )
-                    num = num >> num_bits_shift 
+                    num = num >> num_bits_shift
                 return tuple(a)
 
             def pack(z, num_bits_shift: int) -> int:
@@ -206,7 +206,7 @@ namespace field_arithmetic:
                 a = []
                 for _ in range(length):
                     a.append( num & ((1 << num_bits_shift) - 1) )
-                    num = num >> num_bits_shift 
+                    num = num >> num_bits_shift
                 return tuple(a)
 
             def pack(z, num_bits_shift: int = 128) -> int:
@@ -220,7 +220,7 @@ namespace field_arithmetic:
 
             success_x = is_quad_residue(x, p)
             root_x = sqrt(x, p) if success_x else None
-                
+
             success_gx = is_quad_residue(generator*x, p)
             root_gx = sqrt(generator*x, p) if success_gx else None
 
