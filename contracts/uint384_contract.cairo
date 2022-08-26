@@ -21,6 +21,24 @@ func uint384_mul{range_check_ptr}(a : Uint384, b : Uint384) -> (low : Uint384, h
     return (low, high)
 end
 
+@view
+func uint384_mul_b{range_check_ptr}(a : Uint384, b : Uint384) -> (low : Uint384, high : Uint384):
+    let (low : Uint384, high : Uint384) = uint384_lib.mul_b(a, b)
+    return (low, high)
+end
+
+@view
+func uint384_mul_c{range_check_ptr}(a : Uint384, b : Uint384) -> (low : Uint384, high : Uint384):
+    let (low : Uint384, high : Uint384) = uint384_lib.mul_c(a, b)
+    return (low, high)
+end
+
+@view
+func uint384_mul_Toom3{range_check_ptr}(a : Uint384, b : Uint384) -> (low : Uint384, high : Uint384):
+    let (low : Uint384, high : Uint384) = uint384_lib.mul_Toom3(a, b)
+    return (low, high)
+end
+
 # Returns the floor value of the square root of a Uint384 integer.
 @view
 func uint384_sqrt{range_check_ptr}(a : Uint384) -> (res : Uint384):
