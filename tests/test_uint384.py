@@ -300,14 +300,14 @@ def get_signed_int(num):
     if num < 2**383:
         return num
     else:
-        return -num + 2**383
+        return num - 2**384
 
 
 def get_unsigned_int(num):
-    if num > 0:
+    if num >= 0:
         return num
     else:
-        return -num - 2**383
+        return num + 2**384
 
 
 # Signed integer division between two integers x,y. Returns the quotient and the remainder.
