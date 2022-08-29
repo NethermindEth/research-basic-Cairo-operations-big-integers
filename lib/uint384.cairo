@@ -1,6 +1,7 @@
 from starkware.cairo.common.bitwise import bitwise_and, bitwise_or, bitwise_xor
 from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
 from starkware.cairo.common.math import assert_in_range, assert_le, assert_nn_le, assert_not_zero
+from starkware.cairo.common.math import unsigned_div_rem as frem
 from starkware.cairo.common.math_cmp import is_le
 # from starkware.cairo.common.uint256 import word_reverse_endian
 from starkware.cairo.common.pow import pow
@@ -317,6 +318,110 @@ namespace uint384_lib:
             low=Uint384(d0=res0, d1=res2, d2=res4),
             high=Uint384(d0=res6, d1=res8, d2=w10 + carry),
         )
+    end
+
+    func assert_div{range_check_ptr}(value, div) -> ():
+        let q = [range_check_ptr]
+        let range_check_ptr = range_check_ptr + 1
+        %{
+            from starkware.cairo.common.math_utils import assert_integer
+            assert_integer(ids.div)
+            assert 0 < ids.div <= PRIME // range_check_builtin.bound, \
+               f'div={hex(ids.div)} is out of the valid range.'
+            ids.q, r = divmod(ids.value, ids.div)
+            assert r == 0
+        %}
+
+        assert value = q * div
+        return ()
+    end
+
+    
+    func mul_mont{range_check_ptr}(a : Uint384, b : Uint384) -> (low : Uint384, high : Uint384):
+        alloc_locals
+        const B0_1 = SHIFT
+        const B0_2 = SHIFT**2
+        const B0_3 = SHIFT**3
+        const B0_4 = SHIFT**4
+        const B0_5 = SHIFT**5
+
+        const FAC1 = 2**118
+        const B1_1 = 0
+        const B1_2 = 0
+        const B1_3 = 0
+        const B1_4 = 0
+        const B1_5 = 0
+        
+        const FAC2 = 332306998946228968225951765070086143
+        #apparantly we can't create arrays of consts for some reason
+        const B2_1 = 1024
+        const B2_2 = 1048576
+        const B2_3 = 1073741824
+        const B2_4 = 1099511627776
+        const B2_5 = 1125899906842624
+        
+        const FAC3 = 332306998946228968225951765070086141
+        const B3_1 = 3072
+        const B3_2 = 9437184
+        const B3_3 = 28991029248
+        const B3_4 = 89060441849856
+        const B3_5 = 273593677362757632
+        
+        const FAC4 = 332306998946228968225951765070086139
+        const B4_1 = 5120
+        const B4_2 = 26214400
+        const B4_3 = 134217728000
+        const B4_4 = 687194767360000
+        const B4_5 = 3518437208883200000
+        
+        const FAC5 = 332306998946228968225951765070086135
+        const B5_1 = 9216
+        const B5_2 = 84934656
+        const B5_3 = 782757789696
+        const B5_4 = 7213895789838336
+        const B5_5 = 66483263599150104576
+       
+        local low : Uint384
+        local high : Uint384
+        %{
+            #from tests.utils import split, pack
+            exec(open('tests/utils.py').read()) #horible kludge, fix when we have a good name space
+            #a=pack(ids.a) #that this doesn't work is a flaw in Cairo
+            a=pack((ids.a.d0,ids.a.d1,ids.a.d2))
+            #b=pack(ids.b) #that this doesn't work is a flaw in Cairo
+            b=pack((ids.b.d0,ids.b.d1,ids.b.d2))
+
+            (ids.low.d0,ids.low.d1,ids.low.d2,ids.high.d0,ids.high.d1,ids.high.d2) = split(a*b, length=6)
+        %}
+
+        check(low)
+        check(high)
+
+        assert (a.d0 + a.d1*B0_1 + a.d2*B0_2)*(b.d0 + b.d1*B0_1 + b.d2*B0_2) = (
+            low.d0 + low.d1*B0_1 + low.d2*B0_2 + high.d0*B0_3 + high.d1*B0_4 + high.d2*B0_5
+        )
+
+        let (_,va) = frem(a.d0,FAC1)
+        let (_,vb) = frem(b.d0,FAC1)
+        assert_div(low.d0 + FAC1**2 - va*vb,FAC1)
+        
+        let (_,va) = frem(a.d0 + a.d1*B2_1 + a.d2*B2_2,FAC2)
+        let (_,vb) = frem(b.d0 + b.d1*B2_1 + b.d2*B2_2,FAC2)
+        assert_div(low.d0 + low.d1*B2_1 + low.d2*B2_2 + high.d0*B2_3 + high.d1*B2_4 + high.d2*B2_5 + FAC2**2 - va*vb,FAC2)
+
+        let (_,va) = frem(a.d0 + a.d1*B3_1 + a.d2*B3_2,FAC3)
+        let (_,vb) = frem(b.d0 + b.d1*B3_1 + b.d2*B3_2,FAC3)
+        assert_div(low.d0 + low.d1*B3_1 + low.d2*B3_2 + high.d0*B3_3 + high.d1*B3_4 + high.d2*B3_5 + FAC3**2 - va*vb,FAC3)
+
+        let (_,va) = frem(a.d0 + a.d1*B4_1 + a.d2*B4_2,FAC4)
+        let (_,vb) = frem(b.d0 + b.d1*B4_1 + b.d2*B4_2,FAC4)
+        assert_div(low.d0 + low.d1*B4_1 + low.d2*B4_2 + high.d0*B4_3 + high.d1*B4_4 + high.d2*B4_5 + FAC4**2 - va*vb,FAC4)
+        
+        let (_,va) = frem(a.d0 + a.d1*B5_1 + a.d2*B5_2,FAC5)
+        let (_,vb) = frem(b.d0 + b.d1*B5_1 + b.d2*B5_2,FAC5)
+        assert_div(low.d0 + low.d1*B5_1 + low.d2*B5_2 + high.d0*B5_3 + high.d1*B5_4 + high.d2*B5_5 + FAC5**2 - va*vb,FAC5)
+
+        return(low,high)
     end
 
     # Returns the floor value of the square root of a Uint384 integer.
