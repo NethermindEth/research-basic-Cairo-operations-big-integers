@@ -80,7 +80,7 @@ async def test_mul(x, y, uint384_contract):
     x_split = split(x, num_bits_shift=128, length=3)
     y_split = split(y, num_bits_shift=128, length=3)
 
-    execution_info = await uint384_contract.uint384_mul(x_split, y_split).call()
+    execution_info = await uint384_contract.uint384_mul_c(x_split, y_split).call()
     result_split = execution_info.result
     low = pack(result_split[0], num_bits_shift=128)
     high = pack(result_split[1], num_bits_shift=128)
@@ -300,14 +300,14 @@ def get_signed_int(num):
     if num < 2**383:
         return num
     else:
-        return -num + 2**383
+        return num - 2**384
 
 
 def get_unsigned_int(num):
-    if num > 0:
+    if num >= 0:
         return num
     else:
-        return -num - 2**383
+        return num + 2**384
 
 
 # Signed integer division between two integers x,y. Returns the quotient and the remainder.

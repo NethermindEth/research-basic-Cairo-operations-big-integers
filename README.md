@@ -1,5 +1,8 @@
 # 384-bit prime field arithmetic - Cairo
 
+WARNING: The latest version of asyncio (>=0.19.0) is not supported. To downgrade do `pip install pytest-asyncio==0.18.3`
+
+
 We  implement the following libraries:
 
 ### `field_arithmetic`
