@@ -1,6 +1,7 @@
 from starkware.cairo.common.bitwise import bitwise_and, bitwise_or, bitwise_xor
 from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
 from starkware.cairo.common.math import assert_in_range, assert_le, assert_nn_le, assert_not_zero
+from starkware.cairo.common.math import unsigned_div_rem as frem
 from starkware.cairo.common.math_cmp import is_le
 // from starkware.cairo.common.uint256 import word_reverse_endian
 from starkware.cairo.common.pow import pow
@@ -84,6 +85,74 @@ namespace uint384_lib {
         return (low, high);
     }
 
+    func assert_160_bit{range_check_ptr}(value) {
+        const UPPER_BOUND = 2 ** 160;
+        const SHIFT = 2 ** 128;
+        const HIGH_BOUND = UPPER_BOUND / SHIFT;
+
+        let low = [range_check_ptr];
+        let high = [range_check_ptr + 1];
+
+        %{
+            from starkware.cairo.common.math_utils import as_int
+
+            # Correctness check.
+            value = as_int(ids.value, PRIME) % PRIME
+            assert value < ids.UPPER_BOUND, f'{value} is outside of the range [0, 2**160).'
+
+            # Calculation for the assertion.
+            ids.high, ids.low = divmod(ids.value, ids.SHIFT)
+        %}
+
+        assert [range_check_ptr + 2] = HIGH_BOUND - 1 - high;
+
+        // The assert below guarantees that
+        //   value = high * SHIFT + low <= (HIGH_BOUND - 1) * SHIFT + 2**128 - 1 =
+        //   HIGH_BOUND * SHIFT - SHIFT + SHIFT - 1 = 2**160 - 1.
+        assert value = high * SHIFT + low;
+
+        let range_check_ptr = range_check_ptr + 3;
+        return ();
+    }
+
+    // Splits a field element in the range [0, 2^224) to its low 64-bit and high 160-bit parts.
+    func split_64b{range_check_ptr}(a: felt) -> (low: felt, high: felt) {
+        alloc_locals;
+        local low: felt;
+        local high: felt;
+
+        %{
+            ids.low = ids.a & ((1<<64) - 1)
+            ids.high = ids.a >> 64
+        %}
+        assert a = low + high * HALF_SHIFT;
+        assert [range_check_ptr + 0] = low;
+        assert [range_check_ptr + 1] = HALF_SHIFT - 1 - low;
+        let range_check_ptr = range_check_ptr + 2;
+        assert_160_bit(high);
+        return (low, high);
+    }
+
+    // Splits a field element in the range [0, 2^224) to its low 128-bit and high 96-bit parts.
+    func split_128{range_check_ptr}(a: felt) -> (low: felt, high: felt) {
+        alloc_locals;
+        const UPPER_BOUND = 2 ** 224;
+        const HIGH_BOUND = UPPER_BOUND / SHIFT;
+        local low: felt;
+        local high: felt;
+
+        %{
+            ids.low = ids.a & ((1<<128) - 1)
+            ids.high = ids.a >> 128
+        %}
+        assert a = low + high * SHIFT;
+        assert [range_check_ptr + 0] = high;
+        assert [range_check_ptr + 1] = HIGH_BOUND - 1 - high;
+        assert [range_check_ptr + 2] = low;
+        let range_check_ptr = range_check_ptr + 3;
+        return (low, high);
+    }
+
     // Multiplies two integers. Returns the result as two 384-bit integers: the result has 2*384 bits,
     // the returned integers represent the lower 384-bits and the higher 384-bits, respectively.
     func mul{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, high: Uint384) {
@@ -126,6 +195,248 @@ namespace uint384_lib {
     //     let (res4, carry) = split_128(a.d2 * b.d2  + carry)
     //     return (low=Uint384(d0=res0, d1=res1, d2 = res2), high=Uint384(d0=res3, d1=res4, d2=carry))
     // end
+
+    func mul_b{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, high: Uint384) {
+        alloc_locals;
+        let a0 = a.d0;
+        let a2 = a.d1;
+        let a4 = a.d2;
+        let (b0, b1) = split_64(b.d0);
+        let (b2, b3) = split_64(b.d1);
+        let (b4, b5) = split_64(b.d2);
+
+        let (res0, carry) = split_64(a0 * b0);
+        let (res1, carry) = split_64(a0 * b1 + carry);
+        let (res2, carry) = split_64b(a2 * b0 + a0 * b2 + carry);
+        let (res3, carry) = split_64b(a2 * b1 + a0 * b3 + carry);
+        let (res4, carry) = split_64b(a4 * b0 + a2 * b2 + a0 * b4 + carry);
+        let (res5, carry) = split_64b(a4 * b1 + a2 * b3 + a0 * b5 + carry);
+        let (res6, carry) = split_64b(a4 * b2 + a2 * b4 + carry);
+        let (res7, carry) = split_64b(a4 * b3 + a2 * b5 + carry);
+        let (res8, carry) = split_64b(a4 * b4 + carry);
+        let (res9, carry) = split_64(a4 * b5 + carry);
+        let (res10, carry) = split_64(carry);
+
+        return (
+            low=Uint384(d0=res0 + HALF_SHIFT * res1, d1=res2 + HALF_SHIFT * res3, d2=res4 + HALF_SHIFT * res5),
+            high=Uint384(d0=res6 + HALF_SHIFT * res7, d1=res8 + HALF_SHIFT * res9, d2=res10 + HALF_SHIFT * carry),
+        );
+    }
+
+    func mul_c{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, high: Uint384) {
+        alloc_locals;
+        let (a0, a1) = split_64(a.d0);
+        let (a2, a3) = split_64(a.d1);
+        let (a4, a5) = split_64(a.d2);
+        let (b0, b1) = split_64(b.d0);
+        let (b2, b3) = split_64(b.d1);
+        let (b4, b5) = split_64(b.d2);
+
+        let (res0, carry) = split_128(a0 * b0 + (a1 * b0 + a0 * b1) * HALF_SHIFT);
+        let (res2, carry) = split_128(
+            a2 * b0 + a1 * b1 + a0 * b2 + (a3 * b0 + a2 * b1 + a1 * b2 + a0 * b3) * HALF_SHIFT + carry,
+        );
+        let (res4, carry) = split_128(
+            a4 * b0 + a3 * b1 + a2 * b2 + a1 * b3 + a0 * b4 + (a5 * b0 + a4 * b1 + a3 * b2 + a2 * b3 + a1 * b4 + a0 * b5) * HALF_SHIFT + carry,
+        );
+        let (res6, carry) = split_128(
+            a5 * b1 + a4 * b2 + a3 * b3 + a2 * b4 + a1 * b5 + (a5 * b2 + a4 * b3 + a3 * b4 + a2 * b5) * HALF_SHIFT + carry,
+        );
+        let (res8, carry) = split_128(
+            a5 * b3 + a4 * b4 + a3 * b5 + (a5 * b4 + a4 * b5) * HALF_SHIFT + carry
+        );
+        // let (res10, carry) = split_64(a5 * b5 + carry)
+
+        return (
+            low=Uint384(d0=res0, d1=res2, d2=res4),
+            high=Uint384(d0=res6, d1=res8, d2=a5 * b5 + carry),
+        );
+    }
+
+    func Toom3_eval(m0: felt, m1: felt, m2: felt) -> (p1: felt, pm1: felt, pm2: felt) {
+        alloc_locals;
+        local p = m0 + m2;
+        local pm1 = p - m1;
+        return (p + m1, pm1, (pm1 + m2) * 2 - m0);
+    }
+
+    func unit128_mul_split(x0: felt, x1: felt, y0: felt, y1: felt) -> (z0: felt, z2: felt) {
+        return (x0 * y0 + (x1 * y0 + y1 * x0) * HALF_SHIFT, x1 * y1);
+    }
+
+    func Toom3_interp(z0: felt, z4: felt, p1: felt, pm1: felt, pm2: felt) -> (
+        z1: felt, z2: felt, z3: felt
+    ) {
+        alloc_locals;
+        local r3 = (pm2 - p1) / 3;
+        // local r3 : felt
+        // %{
+        //    ids.r3 = (ids.pm2 - ids.p1)//3
+        // %}
+        // assert pm2 = p1 + 3*r3
+        local r1 = (p1 - pm1) / 2;
+        // local r1 : felt
+        // %{
+        //    ids.r1 = (ids.p1 - ids.pm1)//2
+        // %}
+        // assert p1 = pm1 + r1+r1
+        local r2 = pm1 - z0;
+        local z3 = (r2 - r3) / 2 + 2 * z4;
+        local z2 = r2 + r1 - z4;
+        // local z3 = (pm1 - z0 - r3)/2 + 2*z4
+        // local z2 = pm1 - z0 + r1 - z4
+        local z1 = r1 - z3;
+        return (z1, z2, z3);
+    }
+
+    func mul_Toom3{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, high: Uint384) {
+        alloc_locals;
+        let (a0, a1) = split_64(a.d0);
+        let (a2, a3) = split_64(a.d1);
+        let (a4, a5) = split_64(a.d2);
+        let (b0, b1) = split_64(b.d0);
+        let (b2, b3) = split_64(b.d1);
+        let (b4, b5) = split_64(b.d2);
+
+        let (pa1, pam1, pam2) = Toom3_eval(a0, a2, a4);
+        let (pa1b, pam1b, pam2b) = Toom3_eval(a1, a3, a5);
+        let (pb1, pbm1, pbm2) = Toom3_eval(b0, b2, b4);
+        let (pb1b, pbm1b, pbm2b) = Toom3_eval(b1, b3, b5);
+
+        let (Z0, w2) = unit128_mul_split(a0, a1, b0, b1);
+        let (Z8, w10) = unit128_mul_split(a4, a5, b4, b5);
+        let (r1, r1b) = unit128_mul_split(pa1, pa1b, pb1, pb1b);
+        let (rm1, rm1b) = unit128_mul_split(pam1, pam1b, pbm1, pbm1b);
+        let (rm2, rm2b) = unit128_mul_split(pam2, pam2b, pbm2, pbm2b);
+
+        let (Z2, Z4, Z6) = Toom3_interp(Z0, Z8, r1, rm1, rm2);
+        let (w4, w6, w8) = Toom3_interp(w2, w10, r1b, rm1b, rm2b);
+
+        let (res0, carry) = split_128(Z0);
+        let (res2, carry) = split_128(Z2 + w2 + carry);
+        let (res4, carry) = split_128(Z4 + w4 + carry);
+        let (res6, carry) = split_128(Z6 + w6 + carry);
+        let (res8, carry) = split_128(Z8 + w8 + carry);
+        // let (res10, carry) = split_64(w10 + carry)
+
+        return (
+            low=Uint384(d0=res0, d1=res2, d2=res4), high=Uint384(d0=res6, d1=res8, d2=w10 + carry),
+        );
+    }
+
+    func assert_div{range_check_ptr}(value, div) -> () {
+        let q = [range_check_ptr];
+        let range_check_ptr = range_check_ptr + 1;
+        %{
+            from starkware.cairo.common.math_utils import assert_integer
+            assert_integer(ids.div)
+            assert 0 < ids.div <= PRIME // range_check_builtin.bound, \
+               f'div={hex(ids.div)} is out of the valid range.'
+            ids.q, r = divmod(ids.value, ids.div)
+            assert r == 0
+        %}
+
+        assert value = q * div;
+        return ();
+    }
+
+    func mul_mont{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, high: Uint384) {
+        alloc_locals;
+        const B0_1 = SHIFT;
+        const B0_2 = SHIFT ** 2;
+        const B0_3 = SHIFT ** 3;
+        const B0_4 = SHIFT ** 4;
+        const B0_5 = SHIFT ** 5;
+
+        const FAC1 = 2 ** 118;
+        const B1_1 = 0;
+        const B1_2 = 0;
+        const B1_3 = 0;
+        const B1_4 = 0;
+        const B1_5 = 0;
+
+        const FAC2 = 332306998946228968225951765070086143;
+        // apparantly we can't create arrays of consts for some reason
+        const B2_1 = 1024;
+        const B2_2 = 1048576;
+        const B2_3 = 1073741824;
+        const B2_4 = 1099511627776;
+        const B2_5 = 1125899906842624;
+
+        const FAC3 = 332306998946228968225951765070086141;
+        const B3_1 = 3072;
+        const B3_2 = 9437184;
+        const B3_3 = 28991029248;
+        const B3_4 = 89060441849856;
+        const B3_5 = 273593677362757632;
+
+        const FAC4 = 332306998946228968225951765070086139;
+        const B4_1 = 5120;
+        const B4_2 = 26214400;
+        const B4_3 = 134217728000;
+        const B4_4 = 687194767360000;
+        const B4_5 = 3518437208883200000;
+
+        const FAC5 = 332306998946228968225951765070086135;
+        const B5_1 = 9216;
+        const B5_2 = 84934656;
+        const B5_3 = 782757789696;
+        const B5_4 = 7213895789838336;
+        const B5_5 = 66483263599150104576;
+
+        local low: Uint384;
+        local high: Uint384;
+        %{
+            #from tests.utils import split, pack
+            exec(open('tests/utils.py').read()) #horible kludge, fix when we have a good name space
+            #a=pack(ids.a) #that this doesn't work is a flaw in Cairo
+            a=pack((ids.a.d0,ids.a.d1,ids.a.d2))
+            #b=pack(ids.b) #that this doesn't work is a flaw in Cairo
+            b=pack((ids.b.d0,ids.b.d1,ids.b.d2))
+
+            (ids.low.d0,ids.low.d1,ids.low.d2,ids.high.d0,ids.high.d1,ids.high.d2) = split(a*b, length=6)
+        %}
+
+        check(low);
+        check(high);
+
+        assert (a.d0 + a.d1 * B0_1 + a.d2 * B0_2) * (b.d0 + b.d1 * B0_1 + b.d2 * B0_2) = (
+            low.d0 + low.d1 * B0_1 + low.d2 * B0_2 + high.d0 * B0_3 + high.d1 * B0_4 + high.d2 * B0_5);
+
+        let (_, va) = frem(a.d0, FAC1);
+        let (_, vb) = frem(b.d0, FAC1);
+        assert_div(low.d0 + FAC1 ** 2 - va * vb, FAC1);
+
+        let (_, va) = frem(a.d0 + a.d1 * B2_1 + a.d2 * B2_2, FAC2);
+        let (_, vb) = frem(b.d0 + b.d1 * B2_1 + b.d2 * B2_2, FAC2);
+        assert_div(
+            low.d0 + low.d1 * B2_1 + low.d2 * B2_2 + high.d0 * B2_3 + high.d1 * B2_4 + high.d2 * B2_5 + FAC2 ** 2 - va * vb,
+            FAC2,
+        );
+
+        let (_, va) = frem(a.d0 + a.d1 * B3_1 + a.d2 * B3_2, FAC3);
+        let (_, vb) = frem(b.d0 + b.d1 * B3_1 + b.d2 * B3_2, FAC3);
+        assert_div(
+            low.d0 + low.d1 * B3_1 + low.d2 * B3_2 + high.d0 * B3_3 + high.d1 * B3_4 + high.d2 * B3_5 + FAC3 ** 2 - va * vb,
+            FAC3,
+        );
+
+        let (_, va) = frem(a.d0 + a.d1 * B4_1 + a.d2 * B4_2, FAC4);
+        let (_, vb) = frem(b.d0 + b.d1 * B4_1 + b.d2 * B4_2, FAC4);
+        assert_div(
+            low.d0 + low.d1 * B4_1 + low.d2 * B4_2 + high.d0 * B4_3 + high.d1 * B4_4 + high.d2 * B4_5 + FAC4 ** 2 - va * vb,
+            FAC4,
+        );
+
+        let (_, va) = frem(a.d0 + a.d1 * B5_1 + a.d2 * B5_2, FAC5);
+        let (_, vb) = frem(b.d0 + b.d1 * B5_1 + b.d2 * B5_2, FAC5);
+        assert_div(
+            low.d0 + low.d1 * B5_1 + low.d2 * B5_2 + high.d0 * B5_3 + high.d1 * B5_4 + high.d2 * B5_5 + FAC5 ** 2 - va * vb,
+            FAC5,
+        );
+
+        return (low, high);
+    }
 
     // Returns the floor value of the square root of a Uint384 integer.
     func sqrt{range_check_ptr}(a: Uint384) -> (res: Uint384) {
@@ -493,7 +804,6 @@ func word_reverse_endian{bitwise_ptr: BitwiseBuiltin*}(word: felt) -> (res: felt
     assert bitwise_ptr[3].x = word;
     assert bitwise_ptr[3].y = 0x00ffffffffffffffff00000000000000;
     tempvar word = word + (2 ** 128 - 1) * bitwise_ptr[3].x_and_y;
-
     let bitwise_ptr = bitwise_ptr + 4 * BitwiseBuiltin.SIZE;
     return (res=word / 2 ** (8 + 16 + 32 + 64));
 }

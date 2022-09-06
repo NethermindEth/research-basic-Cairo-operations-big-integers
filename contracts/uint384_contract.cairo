@@ -21,6 +21,30 @@ func uint384_mul{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, high
     return (low, high);
 }
 
+@view
+func uint384_mul_b{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, high: Uint384) {
+    let (low: Uint384, high: Uint384) = uint384_lib.mul_b(a, b);
+    return (low, high);
+}
+
+@view
+func uint384_mul_c{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, high: Uint384) {
+    let (low: Uint384, high: Uint384) = uint384_lib.mul_c(a, b);
+    return (low, high);
+}
+
+@view
+func uint384_mul_Toom3{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, high: Uint384) {
+    let (low: Uint384, high: Uint384) = uint384_lib.mul_Toom3(a, b);
+    return (low, high);
+}
+
+@view
+func uint384_mul_mont{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, high: Uint384) {
+    let (low: Uint384, high: Uint384) = uint384_lib.mul_mont(a, b);
+    return (low, high);
+}
+
 // Returns the floor value of the square root of a Uint384 integer.
 @view
 func uint384_sqrt{range_check_ptr}(a: Uint384) -> (res: Uint384) {
@@ -156,11 +180,12 @@ func uint384_shr{bitwise_ptr: BitwiseBuiltin*, range_check_ptr}(a: Uint384, b: U
     return (res,);
 }
 
+
 // Reverses byte endianness of a uint384 integer.
 @view
-func uint384_reverse_endian{bitwise_ptr: BitwiseBuiltin*, range_check_ptr}(num: Uint384) -> (
+func uint384_reverse_endian{bitwise_ptr : BitwiseBuiltin*, range_check_ptr}(num: Uint384) -> (
     res: Uint384
-) {
+){
     let (res) = uint384_lib.reverse_endian(num);
     return (res,);
 }
