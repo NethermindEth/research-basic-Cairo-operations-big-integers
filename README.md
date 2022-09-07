@@ -8,7 +8,7 @@ We  implement the following libraries:
 ### `field_arithmetic`
 Cairo implementation of operations between elements of a prime field $\mathbb{F}_p$ (i.e. operations modulo a prime p) with p of up to 384 bits. (Note that Cairo's native "integer" is of 251 bits)
 
-**NOTE**: Most hints were whitelisted on Cairo v0.9.1 (20 Jul 2022). It is possible that some subsequent repo updates use hints which are not whitelisted.
+**NOTE**: Most hints were whitelisted on Cairo v0.9.1 (20 Jul 2022). It is possible that some subsequent repo updates use or will use hints which are not whitelisted.
 
 The implemented operations are:
 
