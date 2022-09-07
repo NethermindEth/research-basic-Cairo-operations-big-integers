@@ -15,6 +15,7 @@ The implemented operations are:
 - multiplication modulo p
 - division (i.e.\ multiplication by the modular inverse) modulo p
 - exponentiation modulo p
+- square root existence check and square root extraction
 
 
 ### `uint384`
