@@ -476,7 +476,7 @@ namespace uint384_lib {
         let range_check_ptr = range_check_ptr + 2;
 
         // Verify that n >= root**2.
-        let (root_squared, carry) = mul(root, root);
+        let (root_squared, carry) = mul_c(root, root);
         assert carry = Uint384(0, 0, 0);
         let (check_lower_bound) = le(root_squared, a);
         assert check_lower_bound = 1;
@@ -486,7 +486,7 @@ namespace uint384_lib {
         // (root+1)**2 = 2**384. Therefore next_root_squared - 1 = 2**384 - 1, as desired.
         let (next_root, add_carry) = add(root, Uint384(1, 0, 0));
         assert add_carry = 0;
-        let (next_root_squared, _) = mul(next_root, next_root);
+        let (next_root_squared, _) = mul_c(next_root, next_root);
         let (next_root_squared_minus_one) = sub(next_root_squared, Uint384(1, 0, 0));
         let (check_upper_bound) = le(a, next_root_squared_minus_one);
         assert check_upper_bound = 1;
@@ -594,7 +594,7 @@ namespace uint384_lib {
             ids.remainder.d1 = remainder_split[1]
             ids.remainder.d2 = remainder_split[2]
         %}
-        let (res_mul: Uint384, carry: Uint384) = mul(quotient, div);
+        let (res_mul: Uint384, carry: Uint384) = mul_c(quotient, div);
         assert carry = Uint384(0, 0, 0);
 
         let (check_val: Uint384, add_carry: felt) = add(res_mul, remainder);
@@ -764,7 +764,7 @@ namespace uint384_lib {
     // Computes the logical left shift of a uint384 integer.
     func shl{range_check_ptr}(a: Uint384, b: Uint384) -> (res: Uint384) {
         let (c) = pow2(b);
-        let (res, _) = mul(a, c);
+        let (res, _) = mul_c(a, c);
         return (res,);
     }
 

@@ -53,5 +53,5 @@ async def field_arithmetic_contract(starknet_factory):
     # contract_class = compile_starknet_files(
     #     files=[FIELD_ARITHMETIC_CONTRACT], disable_hint_validation=True
     # )
-    contract = await starknet.deploy(source=FIELD_ARITHMETIC_CONTRACT,)
+    contract = await starknet.deploy(source=FIELD_ARITHMETIC_CONTRACT,disable_hint_validation=True)
     return contract
