@@ -7,6 +7,8 @@ from starkware.cairo.common.math_cmp import is_le
 from starkware.cairo.common.pow import pow
 from starkware.cairo.common.registers import get_ap, get_fp_and_pc
 
+from lib.fft import fft_lib
+
 // This library is adapted from Cairo's common library Uint256 and it follows it as closely as possible.
 // The library implements basic operations between 384-bit integers.
 // Most operations use unsigned integers. Only a few operations are implemented for signed integers
@@ -437,6 +439,47 @@ namespace uint384_lib {
 
         return (low, high);
     }
+
+    func mul_s{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, high: Uint384) {
+        alloc_locals;
+        let (a0, a1) = split_64(a.d0);
+        let (a2, a3) = split_64(a.d1);
+        let (a4, a5) = split_64(a.d2);
+        let (b0, b1) = split_64(b.d0);
+        let (b2, b3) = split_64(b.d1);
+        let (b4, b5) = split_64(b.d2);
+
+	//we really need arrays
+	let (fta0,fta1,fta2,fta3,fta4,fta5,fta6,fta7,fta8,fta9,fta10,fta11,fta12,fta13,fta14,fta15) = fft_lib.fft16(
+	     a0,a1,a2,a3,a4,a5,0,0,0,0,0,0,0,0,0,0);
+	let (ftb0,ftb1,ftb2,ftb3,ftb4,ftb5,ftb6,ftb7,ftb8,ftb9,ftb10,ftb11,ftb12,ftb13,ftb14,ftb15) = fft_lib.fft16(
+	     b0,b1,b2,b3,b4,b5,0,0,0,0,0,0,0,0,0,0);
+
+	let (d0,d1,d2,d3,d4,d5,d6,d7,d8,d9,d10,d11,d12,d13,d14,d15) = fft_lib.fft16i(
+	     fta0*ftb0,fta1*ftb1,fta2*ftb2,fta3*ftb3,fta4*ftb4,fta5*ftb5,fta6*ftb6,fta7*ftb7,
+	     fta8*ftb8,fta9*ftb9,fta10*ftb10,fta11*ftb11,fta12*ftb12,fta13*ftb13,fta14*ftb14,fta15*ftb15);
+	
+	
+        let (res0, carry) = split_128(d0 + d1*HALF_SHIFT);
+        let (res2, carry) = split_128(d2 + d3*HALF_SHIFT + carry);
+        let (res4, carry) = split_128(d4 + d5*HALF_SHIFT + carry);
+        let (res6, carry) = split_128(d6 + d7*HALF_SHIFT + carry);
+        let (res8, carry) = split_128(d8 + d9*HALF_SHIFT + carry);
+        // let (res10, carry) = split_64(d10 + carry)
+
+	//these should be implied
+	//assert d11=0;
+	//assert d12=0;
+	//assert d13=0;
+	//assert d14=0;
+	//assert d15=0;
+	
+        return (
+            low=Uint384(d0=res0, d1=res2, d2=res4),
+            high=Uint384(d0=res6, d1=res8, d2=d10 + carry),
+        );
+    }
+
 
     // Returns the floor value of the square root of a Uint384 integer.
     func sqrt{range_check_ptr}(a: Uint384) -> (res: Uint384) {
