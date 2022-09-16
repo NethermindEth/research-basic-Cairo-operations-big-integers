@@ -262,7 +262,7 @@ namespace uint384_lib {
         return (p + m1, pm1, (pm1 + m2) * 2 - m0);
     }
 
-    func unit128_mul_split(x0: felt, x1: felt, y0: felt, y1: felt) -> (z0: felt, z2: felt) {
+    func uint128_mul_split(x0: felt, x1: felt, y0: felt, y1: felt) -> (z0: felt, z2: felt) {
         return (x0 * y0 + (x1 * y0 + y1 * x0) * HALF_SHIFT, x1 * y1);
     }
 
@@ -305,11 +305,11 @@ namespace uint384_lib {
         let (pb1, pbm1, pbm2) = Toom3_eval(b0, b2, b4);
         let (pb1b, pbm1b, pbm2b) = Toom3_eval(b1, b3, b5);
 
-        let (Z0, w2) = unit128_mul_split(a0, a1, b0, b1);
-        let (Z8, w10) = unit128_mul_split(a4, a5, b4, b5);
-        let (r1, r1b) = unit128_mul_split(pa1, pa1b, pb1, pb1b);
-        let (rm1, rm1b) = unit128_mul_split(pam1, pam1b, pbm1, pbm1b);
-        let (rm2, rm2b) = unit128_mul_split(pam2, pam2b, pbm2, pbm2b);
+        let (Z0, w2) = uint128_mul_split(a0, a1, b0, b1);
+        let (Z8, w10) = uint128_mul_split(a4, a5, b4, b5);
+        let (r1, r1b) = uint128_mul_split(pa1, pa1b, pb1, pb1b);
+        let (rm1, rm1b) = uint128_mul_split(pam1, pam1b, pbm1, pbm1b);
+        let (rm2, rm2b) = uint128_mul_split(pam2, pam2b, pbm2, pbm2b);
 
         let (Z2, Z4, Z6) = Toom3_interp(Z0, Z8, r1, rm1, rm2);
         let (w4, w6, w8) = Toom3_interp(w2, w10, r1b, rm1b, rm2b);
@@ -326,6 +326,51 @@ namespace uint384_lib {
         );
     }
 
+    func mul_kar{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, high: Uint384) {
+        alloc_locals;
+        let (a0, a1) = split_64(a.d0);
+        let (a2, a3) = split_64(a.d1);
+        let (a4, a5) = split_64(a.d2);
+        let (b0, b1) = split_64(b.d0);
+        let (b2, b3) = split_64(b.d1);
+        let (b4, b5) = split_64(b.d2);
+
+	local A0 = a0 + a3;
+	local A1 = a1 + a4;
+	local A2 = a2 + a5;
+	local B0 = b0 + b3;
+	local B1 = b1 + b4;
+	local B2 = b2 + b5;
+
+	local d0 = a0*b0;
+	local d1 = a1*b0 + a0*b1;
+	local d2 = a2*b0 + a1*b1 + a0*b2;
+	local d3 = a2*b1 + a1*b2;
+	local d4 = a2*b2;
+
+	local d6 = a3*b3;
+	local d7 = a4*b3 + a3*b4;
+	local d8 = a5*b3 + a4*b4 + a3*b5;
+	local d9 = a5*b4 + a4*b5;
+	local d10 = a5*b5;
+
+        let (res0, carry) = split_128(d0 + d1 * HALF_SHIFT);
+        let (res2, carry) = split_128(d2 + (d3 + A0*B0 - d0 - d6) * HALF_SHIFT + carry);
+        let (res4, carry) = split_128(
+	    d4 + A1*B0 + A0*B1 - d1 - d7 + (A2*B0 + A1*B1 + A0*B2 - d2 - d8) * HALF_SHIFT + carry
+        );
+        let (res6, carry) = split_128(
+            d6 + A2*B1 + A1*B2 - d3 - d9 + (d7 + A2*B2 - d4 - d10) * HALF_SHIFT + carry
+        );
+        let (res8, carry) = split_128(d8 + d9 * HALF_SHIFT + carry);
+        // let (res10, carry) = split_64(d10 + carry)
+
+        return (
+            low=Uint384(d0=res0, d1=res2, d2=res4), high=Uint384(d0=res6, d1=res8, d2=d10 + carry),
+        );
+    }
+
+    
     func assert_div{range_check_ptr}(value, div) -> () {
         let q = [range_check_ptr];
         let range_check_ptr = range_check_ptr + 1;

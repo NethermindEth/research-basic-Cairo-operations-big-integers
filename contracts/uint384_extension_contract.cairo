@@ -29,6 +29,30 @@ func uint384_mul_uint768_by_uint384{range_check_ptr}(a: Uint768, b: Uint384) -> 
     return (low, high);
 }
 
+@view
+func uint384_mul_uint768_by_uint384_c{range_check_ptr}(a: Uint768, b: Uint384) -> (
+    low: Uint768, high: Uint384
+) {
+    let (low: Uint768, high: Uint384) = uint384_extension_lib.mul_uint768_by_uint384_c(a, b);
+    return (low, high);
+}
+
+@view
+func uint384_mul_uint768_by_uint384_kar{range_check_ptr}(a: Uint768, b: Uint384) -> (
+    low: Uint768, high: Uint384
+) {
+    let (low: Uint768, high: Uint384) = uint384_extension_lib.mul_uint768_by_uint384_kar(a, b);
+    return (low, high);
+}
+
+@view
+func uint384_mul_uint768_by_uint384_Toom25{range_check_ptr}(a: Uint768, b: Uint384) -> (
+    low: Uint768, high: Uint384
+) {
+    let (low: Uint768, high: Uint384) = uint384_extension_lib.mul_uint768_by_uint384_Toom25(a, b);
+    return (low, high);
+}
+
 // Unsigned integer division between a 768-bit integer and a 384-bit integer. Returns the quotient (768 bits) and the remainder (384 bits).
 // Conforms to EVM specifications: division by 0 yields 0.
 @view

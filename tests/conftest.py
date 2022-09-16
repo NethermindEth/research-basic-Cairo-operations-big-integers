@@ -42,7 +42,7 @@ async def uint384_extension_contract(starknet_factory):
     # contract_class = compile_starknet_files(
     #     files=[UINT384_EXTENSION_CONTRACT], disable_hint_validation=True
     # )
-    contract = await starknet.deploy(source=UINT384_EXTENSION_CONTRACT,)
+    contract = await starknet.deploy(source=UINT384_EXTENSION_CONTRACT,disable_hint_validation=True)
     return contract
 
 
