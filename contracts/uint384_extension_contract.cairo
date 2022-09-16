@@ -38,6 +38,14 @@ func uint384_mul_uint768_by_uint384_c{range_check_ptr}(a: Uint768, b: Uint384) -
 }
 
 @view
+func uint384_mul_uint768_by_uint384_d{range_check_ptr}(a: Uint768, b: Uint384) -> (
+    low: Uint768, high: Uint384
+) {
+    let (low: Uint768, high: Uint384) = uint384_extension_lib.mul_uint768_by_uint384_d(a, b);
+    return (low, high);
+}
+
+@view
 func uint384_mul_uint768_by_uint384_kar{range_check_ptr}(a: Uint768, b: Uint384) -> (
     low: Uint768, high: Uint384
 ) {

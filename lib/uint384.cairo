@@ -255,6 +255,39 @@ namespace uint384_lib {
         );
     }
 
+    func mul_d{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, high: Uint384) {
+        alloc_locals;
+        let (a0, a1) = split_64(a.d0);
+        let (a2, a3) = split_64(a.d1);
+        let (a4, a5) = split_64(a.d2);
+        let (b0, b1) = split_64(b.d0);
+        let (b2, b3) = split_64(b.d1);
+        let (b4, b5) = split_64(b.d2);
+
+	local b12 = b1 + b2*HALF_SHIFT;
+	local b34 = b3 + b4*HALF_SHIFT;
+
+        let (res0, carry) = split_128(a0 * b.d0 + (a1 * b0) * HALF_SHIFT);
+        let (res2, carry) = split_128(
+            a2 * b.d0 + a1 * b12 + a0 * b.d1 + (a3 * b0) * HALF_SHIFT + carry,
+        );
+        let (res4, carry) = split_128(
+            a4 * b.d0 + a3 * b12 + a2 * b.d1 + a1 * b34 + a0 * b.d2 + (a5 * b0) * HALF_SHIFT + carry,
+        );
+        let (res6, carry) = split_128(
+            a5 * b12 + a4 * b.d1 + a3 * b34 + a2 * b.d2 + a1 * b5 + carry,
+        );
+        let (res8, carry) = split_128(
+            a5 * b34 + a4 * b.d2 + a3 * b5 + carry
+        );
+        // let (res10, carry) = split_64(a5 * b5 + carry)
+
+        return (
+            low=Uint384(d0=res0, d1=res2, d2=res4),
+            high=Uint384(d0=res6, d1=res8, d2=a5 * b5 + carry),
+        );
+    }
+
     func Toom3_eval(m0: felt, m1: felt, m2: felt) -> (p1: felt, pm1: felt, pm2: felt) {
         alloc_locals;
         local p = m0 + m2;

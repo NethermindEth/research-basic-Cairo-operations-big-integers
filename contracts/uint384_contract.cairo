@@ -34,6 +34,12 @@ func uint384_mul_c{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, hi
 }
 
 @view
+func uint384_mul_d{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, high: Uint384) {
+    let (low: Uint384, high: Uint384) = uint384_lib.mul_d(a, b);
+    return (low, high);
+}
+
+@view
 func uint384_mul_Toom3{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, high: Uint384) {
     let (low: Uint384, high: Uint384) = uint384_lib.mul_Toom3(a, b);
     return (low, high);

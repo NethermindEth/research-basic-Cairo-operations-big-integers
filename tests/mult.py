@@ -78,6 +78,23 @@ async def test_mul( uint384_contract):
 
     assert result == x * y
 
+    execution_info = await uint384_contract.uint384_mul_d(x_split, y_split).call()
+
+    print(  
+    "%20s" % "mul d",
+    "|",
+    "%20s" % execution_info.call_info.execution_resources.n_steps,
+    "|",
+    "%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter,
+    )
+
+    result_split = execution_info.result
+    low = pack(result_split[0], num_bits_shift=128)
+    high = pack(result_split[1], num_bits_shift=128)
+    result = low + 2**384 * high
+
+    assert result == x * y
+
     execution_info = await uint384_contract.uint384_mul_Toom3(x_split, y_split).call()
 
     print(  
@@ -187,6 +204,23 @@ async def test_ext_mul( uint384_extension_contract):
 
     print(  
     "%20s" % "mul c",
+    "|",
+    "%20s" % execution_info.call_info.execution_resources.n_steps,
+    "|",
+    "%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter,
+    )
+
+    result_split = execution_info.result
+    low = pack(result_split[0], num_bits_shift=128)
+    high = pack(result_split[1], num_bits_shift=128)
+    result = low + 2**768 * high
+
+    assert result == x * y
+
+    execution_info = await uint384_extension_contract.uint384_mul_uint768_by_uint384_d(x_split, y_split).call()
+
+    print(  
+    "%20s" % "mul d",
     "|",
     "%20s" % execution_info.call_info.execution_resources.n_steps,
     "|",
