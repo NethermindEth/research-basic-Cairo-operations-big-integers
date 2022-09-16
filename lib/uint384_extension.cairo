@@ -406,6 +406,7 @@ namespace uint384_extension_lib {
         //let (w10, w14) = Toom25_interp(w6, 0, r1d, rm1d);
 	local t2d : felt;
         %{
+            p = 2**251 + 17*2**192 + 1
             ids.t2d = ((ids.r1d + ids.rm1d)*ids.HALF)%p
         %}
 	//assert r1d = t2d + t1d;
