@@ -261,6 +261,83 @@ namespace uint384_extension_lib {
         );
     }
 
+    func mul_uint768_by_uint384_kar_d{range_check_ptr}(a: Uint768, b: Uint384) -> (
+        low: Uint768, high: Uint384
+    ) {
+        alloc_locals;
+        let (a0, a1) = uint384_lib.split_64(a.d0);
+        let (a2, a3) = uint384_lib.split_64(a.d1);
+        let (a4, a5) = uint384_lib.split_64(a.d2);
+        let (a6, a7) = uint384_lib.split_64(a.d3);
+        let (a8, a9) = uint384_lib.split_64(a.d4);
+        let (a10, a11) = uint384_lib.split_64(a.d5);
+        let (b0, b1) = uint384_lib.split_64(b.d0);
+        let (b2, b3) = uint384_lib.split_64(b.d1);
+        let (b4, b5) = uint384_lib.split_64(b.d2);
+
+	local A0 = a0 + a3;
+	local A1 = a1 + a4;
+	local A2 = a2 + a5;
+	
+	local A6 = a6 + a9;
+	local A7 = a7 + a10;
+	local A8 = a8 + a11;
+
+	local B0 = b0 + b3;
+	local B1 = b1 + b4;
+	local B2 = b2 + b5;
+
+	local d0 = a0*b0;
+	local d1 = a1*b0 + a0*b1;
+	local d2 = a2*b0 + a1*b1 + a0*b2;
+	local d3 = a2*b1 + a1*b2;
+	local d4 = a2*b2;
+
+	local d6 = a3*b3;
+	local d7 = a4*b3 + a3*b4;
+	local d8 = a5*b3 + a4*b4 + a3*b5;
+	local d9 = a5*b4 + a4*b5;
+	local d10 = a5*b5;
+
+	local e6 = a6*b0;
+	local e7 = a7*b0 + a6*b1;
+	local e8 = a8*b0 + a7*b1 + a6*b2;
+	local e9 = a8*b1 + a7*b2;
+	local e10 = a8*b2;
+
+	local e12 = a9*b3;
+	local e13 = a10*b3 + a9*b4;
+	local e14 = a11*b3 + a10*b4 + a9*b5;
+	local e15 = a11*b4 + a10*b5;
+	local e16 = a11*b5;
+
+	local B01 = B0 + B1*HALF_SHIFT;
+	local B12 = B1 + B2*HALF_SHIFT;
+	
+        let (res0, carry) = uint384_lib.split_128(d0 + d1 * HALF_SHIFT);
+        let (res2, carry) = uint384_lib.split_128(d2 + (d3 + A0*B0 - d0 - d6) * HALF_SHIFT + carry);
+        let (res4, carry) = uint384_lib.split_128(
+	    d4 + A1*B01 + A0*B12 - d1 - d7 + (A2*B0 - d2 - d8) * HALF_SHIFT + carry
+        );
+        let (res6, carry) = uint384_lib.split_128(
+            d6 + e6 + A2*B12 + A1*B2 - d3 - d9 + (d7 + e7 - d4 - d10) * HALF_SHIFT + carry
+        );
+        let (res8, carry) = uint384_lib.split_128(d8 + e8 + (d9 + e9 + A6*B0 - e6 - e12) * HALF_SHIFT + carry);
+        let (res10, carry) = uint384_lib.split_128(
+	    d10 + e10 + A7*B01 + A6*B12 - e7 - e13 + (A8*B0 - e8 - e14) * HALF_SHIFT + carry
+	);
+        let (res12, carry) = uint384_lib.split_128(
+            e12 + A8*B12 + A7*B2 - e9 - e15 + (e13 - e10 - e16) * HALF_SHIFT + carry
+        );
+        let (res14, carry) = uint384_lib.split_128(e14 + e15 * HALF_SHIFT + carry);
+        // let (res16, carry) = split_64(e16 + carry)
+
+        return (
+	    low=Uint768(d0=res0, d1=res2, d2=res4, d3=res6, d4=res8, d5=res10),
+            high=Uint384(d0=res12, d1=res14, d2=e16 + carry),
+        );
+    }
+
     func Toom25_eval(m0: felt, m1: felt, m2: felt) -> (p1: felt, pm1: felt) {
         alloc_locals;
         local p = m0 + m2;
