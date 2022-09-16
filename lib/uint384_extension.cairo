@@ -153,24 +153,25 @@ namespace uint384_extension_lib {
         let (b2, b3) = uint384_lib.split_64(b.d1);
         let (b4, b5) = uint384_lib.split_64(b.d2);
 
+	local B0 = b0*HALF_SHIFT;
 	local b12 = b1 + b2*HALF_SHIFT;
 	local b34 = b3 + b4*HALF_SHIFT;
 
-        let (res0, carry) = uint384_lib.split_128(a0 * b.d0 + (a1 * b0) * HALF_SHIFT);
+        let (res0, carry) = uint384_lib.split_128(a1 * B0 + a0 * b.d0);
         let (res2, carry) = uint384_lib.split_128(
-            a2 * b.d0 + a1 * b12 + a0 * b.d1 + (a3 * b0) * HALF_SHIFT + carry
+            a3 * B0 + a2 * b.d0 + a1 * b12 + a0 * b.d1 + carry
         );
         let (res4, carry) = uint384_lib.split_128(
-            a4 * b.d0 + a3 * b12 + a2 * b.d1 + a1 * b34 + a0 * b.d2 + (a5 * b0) * HALF_SHIFT + carry
+            a5 * B0 + a4 * b.d0 + a3 * b12 + a2 * b.d1 + a1 * b34 + a0 * b.d2 + carry
         );
         let (res6, carry) = uint384_lib.split_128(
-            a6 * b.d0 + a5 * b12 + a4 * b.d1 + a3 * b34 + a2 * b.d2 + a1 * b5 + (a7 * b0) * HALF_SHIFT + carry
+            a7 * B0 + a6 * b.d0 + a5 * b12 + a4 * b.d1 + a3 * b34 + a2 * b.d2 + a1 * b5 + carry
         );
         let (res8, carry) = uint384_lib.split_128(
-            a8 * b.d0 + a7 * b12 + a6 * b.d1 + a5 * b34 + a4 * b.d2 + a3 * b5 + (a9 * b0) * HALF_SHIFT + carry
+            a9 * B0 + a8 * b.d0 + a7 * b12 + a6 * b.d1 + a5 * b34 + a4 * b.d2 + a3 * b5 + carry
         );
         let (res10, carry) = uint384_lib.split_128(
-            a10 * b.d0 + a9 * b12 + a8 * b.d1 + a7 * b34 + a6 * b.d2 + a5 * b5 + (a11 * b0) * HALF_SHIFT + carry
+            a11 * B0 + a10 * b.d0 + a9 * b12 + a8 * b.d1 + a7 * b34 + a6 * b.d2 + a5 * b5 + carry
         );
         let (res12, carry) = uint384_lib.split_128(
             a11 * b12 + a10 * b.d1 + a9 * b34 + a8 * b.d2 + a7 * b5 + carry
@@ -481,7 +482,7 @@ namespace uint384_extension_lib {
             ids.remainder.d2 = remainder_split[2]
         %}
 
-        let (res_mul_low: Uint768, res_mul_high: Uint384) = mul_uint768_by_uint384(quotient, div);
+        let (res_mul_low: Uint768, res_mul_high: Uint384) = mul_uint768_by_uint384_d(quotient, div);
 
         assert res_mul_high = Uint384(0, 0, 0);
 
