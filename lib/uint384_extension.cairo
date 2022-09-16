@@ -333,37 +333,47 @@ namespace uint384_extension_lib {
 	local pbm1 = b0 - b4;
 	local pb1b = b1 + b5;
 	local pbm1b = b1 - b5;
-	
+
+	local B0 = b0*HALF_SHIFT;
+	local B2 = b2*HALF_SHIFT;
+	local b12 = b1 + B2;
+	local B4 = b4*HALF_SHIFT;
 	//let (X0, Y2, Z4, w6) = unit256_mul_split(a0, a1, a2, a3, b0, b1, b2, b3);
         //local X0 = a0*b0 + (a1*b0 + a0*b1) * HALF_SHIFT;
-        local X0 = a0*b.d0 + (a1*b0) * HALF_SHIFT;
+        local X0 = a0*b.d0 + a1*B0;
 	//local Y2 = a2*b0 + a1*b1 + a0*b2 + (a3*b0 + a2*b1 + a1*b2 + a0*b3) * HALF_SHIFT;
-	local Y2 = a2*b.d0 + a1*b1 + a0*b.d1 + (a3*b0 + a1*b2) * HALF_SHIFT;
+	local Y2 = a2*b.d0 + a1*b12 + a0*b.d1 + a3*B0;
 	//local Z4 = a3*b1 + a2*b2 + a1*b3 + (a3*b2 + a2*b3) * HALF_SHIFT;
-	local Z4 = a3*b1 + a2*b.d1 + a1*b3 + (a3*b2) * HALF_SHIFT;
+	local Z4 = a3*b12 + a2*b.d1 + a1*b3;
 	local w6 = a3*b3;
 	
         //let (X12, Y14, Z16) = unit256_mul_splitb(a8, a9, a10, a11, b4, b5);
 	//local X12 = a8*b4 + (a9*b4 + a8*b5) * HALF_SHIFT;
-	local X12 = a8*b.d2 + (a9*b4) * HALF_SHIFT;
+	local X12 = a8*b.d2 + a9*B4;
 	//local Y14 = a10*b4 + a9*b5 + (a11*b4 + a10*b5) * HALF_SHIFT;
-	local Y14 = a10*b.d2 + a9*b5 + (a11*b4) * HALF_SHIFT;
+	local Y14 = a10*b.d2 + a9*b5 + a11*B4;
 	local Z16 = a11*b5;
-	
+
+	local Pb1 = pb1*HALF_SHIFT;
+	local pb1ab = pb1 + pb1b*HALF_SHIFT;
+	local pb1bc = pb1b + B2;
         //let (r1, r1b, r1c, r1d) = unit256_mul_split(pa1, pa1b, pa1c, pa1d, pb1, pb1b, b2, b3);
-        local r1 = pa1*pb1 + (pa1b*pb1 + pa1*pb1b) * HALF_SHIFT;
+        local r1 = pa1*pb1ab + pa1b*Pb1;
 	//local r1b = pa1c*pb1 + pa1b*pb1b + pa1*b2 + (pa1d*pb1 + pa1c*pb1b + pa1b*b2 + pa1*b3) * HALF_SHIFT;
-	local r1b = pa1c*pb1 + pa1b*pb1b + pa1*b.d1 + (pa1d*pb1 + pa1c*pb1b + pa1b*b2) * HALF_SHIFT;
+	local r1b = pa1c*pb1ab + pa1b*pb1bc + pa1*b.d1 + pa1d*Pb1;
 	//local r1c = pa1d*pb1b + pa1c*b2 + pa1b*b3 + (pa1d*b2 + pa1c*b3) * HALF_SHIFT;
-	local r1c = pa1d*pb1b + pa1c*b.d1 + pa1b*b3 + (pa1d*b2) * HALF_SHIFT;
+	local r1c = pa1d*pb1bc + pa1c*b.d1 + pa1b*b3;
 	local r1d = pa1d*b3;
-	
+
+	local Pbm1 = pbm1*HALF_SHIFT;
+	local pbm1ab = pbm1 + pbm1b*HALF_SHIFT;
+	local pbm1bc = pbm1b + B2;	
 	//let (rm1, rm1b, rm1c, rm1d) = unit256_mul_split(pam1, pam1b, pam1c, pam1d, pbm1, pbm1b, b2, b3);
-        local rm1 = pam1*pbm1 + (pam1b*pbm1 + pam1*pbm1b) * HALF_SHIFT;
+        local rm1 = pam1*pbm1ab + pam1b*Pbm1;
 	//local rm1b = pam1c*pbm1 + pam1b*pbm1b + pam1*b2 + (pam1d*pbm1 + pam1c*pbm1b + pam1b*b2 + pam1*b3) * HALF_SHIFT;
-	local rm1b = pam1c*pbm1 + pam1b*pbm1b + pam1*b.d1 + (pam1d*pbm1 + pam1c*pbm1b + pam1b*b2) * HALF_SHIFT;
+	local rm1b = pam1c*pbm1ab + pam1b*pbm1bc + pam1*b.d1 + pam1d*Pbm1;
 	//local rm1c = pam1d*pbm1b + pam1c*b2 + pam1b*b3 + (pam1d*b2 + pam1c*b3) * HALF_SHIFT;
-	local rm1c = pam1d*pbm1b + pam1c*b.d1 + pam1b*b3 + (pam1d*b2) * HALF_SHIFT;
+	local rm1c = pam1d*pbm1bc + pam1c*b.d1 + pam1b*b3;
 	local rm1d = pam1d*b3;	
 
 	const HALF = 1/2;
