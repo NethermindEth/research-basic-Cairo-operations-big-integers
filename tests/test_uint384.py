@@ -91,6 +91,26 @@ async def test_mul(x, y, uint384_contract):
 
 @given(
     x=st.integers(min_value=1, max_value=2**384 - 1),
+)
+@settings(deadline=None)
+@pytest.mark.asyncio
+async def test_square(x, uint384_contract):
+
+    print(x)
+
+    x_split = split(x, num_bits_shift=128, length=3)
+
+    execution_info = await uint384_contract.uint384_square_e(x_split).call()
+    result_split = execution_info.result
+    low = pack(result_split[0], num_bits_shift=128)
+    high = pack(result_split[1], num_bits_shift=128)
+    result = low + 2**384 * high
+
+    assert result == x * x
+
+
+@given(
+    x=st.integers(min_value=1, max_value=2**384 - 1),
     y=st.integers(min_value=1, max_value=2**384 - 1),
 )
 @settings(deadline=None)

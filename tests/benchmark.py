@@ -112,6 +112,36 @@ async def test_benchmark_uin384(uint384_contract):
     "%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter,
     )
 
+    execution_info = await uint384_contract.uint384_square_c(x_split).call()
+    
+    print(
+    "%20s" % "square c",
+    "|",
+    "%20s" % execution_info.call_info.execution_resources.n_steps,
+    "|",
+    "%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter,
+    )
+
+    execution_info = await uint384_contract.uint384_square_d(x_split).call()
+    
+    print(
+    "%20s" % "square d",
+    "|",
+    "%20s" % execution_info.call_info.execution_resources.n_steps,
+    "|",
+    "%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter,
+    )
+    
+    execution_info = await uint384_contract.uint384_square_e(x_split).call()
+    
+    print(
+    "%20s" % "square e",
+    "|",
+    "%20s" % execution_info.call_info.execution_resources.n_steps,
+    "|",
+    "%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter,
+    )
+
     execution_info = await uint384_contract.uint384_unsigned_div_rem(x_split, y_split).call()
     
     print(

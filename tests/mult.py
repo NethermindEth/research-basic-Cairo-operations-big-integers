@@ -163,6 +163,57 @@ async def test_mul( uint384_contract):
 
     assert result == x * y
 
+    execution_info = await uint384_contract.uint384_square_c(x_split).call()
+
+    print(  
+    "%20s" % "square c",
+    "|",
+    "%20s" % execution_info.call_info.execution_resources.n_steps,
+    "|",
+    "%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter,
+    )
+
+    result_split = execution_info.result
+    low = pack(result_split[0], num_bits_shift=128)
+    high = pack(result_split[1], num_bits_shift=128)
+    result = low + 2**384 * high
+
+    assert result == x * x
+    
+    execution_info = await uint384_contract.uint384_square_d(x_split).call()
+
+    print(  
+    "%20s" % "square d",
+    "|",
+    "%20s" % execution_info.call_info.execution_resources.n_steps,
+    "|",
+    "%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter,
+    )
+
+    result_split = execution_info.result
+    low = pack(result_split[0], num_bits_shift=128)
+    high = pack(result_split[1], num_bits_shift=128)
+    result = low + 2**384 * high
+
+    assert result == x * x
+    
+    execution_info = await uint384_contract.uint384_square_e(x_split).call()
+
+    print(  
+    "%20s" % "square e",
+    "|",
+    "%20s" % execution_info.call_info.execution_resources.n_steps,
+    "|",
+    "%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter,
+    )
+
+    result_split = execution_info.result
+    low = pack(result_split[0], num_bits_shift=128)
+    high = pack(result_split[1], num_bits_shift=128)
+    result = low + 2**384 * high
+
+    assert result == x * x
+
 
 @pytest.mark.asyncio
 async def test_ext_mul( uint384_extension_contract):

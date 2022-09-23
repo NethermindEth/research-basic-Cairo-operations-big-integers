@@ -63,6 +63,24 @@ func uint384_mul_kar{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, 
     return (low, high);
 }
 
+@view
+func uint384_square_c{range_check_ptr}(a: Uint384) -> (low: Uint384, high: Uint384) {
+    let (low: Uint384, high: Uint384) = uint384_lib.square_c(a);
+    return (low, high);
+}
+
+@view
+func uint384_square_d{range_check_ptr}(a: Uint384) -> (low: Uint384, high: Uint384) {
+    let (low: Uint384, high: Uint384) = uint384_lib.square_d(a);
+    return (low, high);
+}
+
+@view
+func uint384_square_e{range_check_ptr}(a: Uint384) -> (low: Uint384, high: Uint384) {
+    let (low: Uint384, high: Uint384) = uint384_lib.square_e(a);
+    return (low, high);
+}
+
 // Returns the floor value of the square root of a Uint384 integer.
 @view
 func uint384_sqrt{range_check_ptr}(a: Uint384) -> (res: Uint384) {

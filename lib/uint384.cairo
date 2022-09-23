@@ -404,7 +404,6 @@ namespace uint384_lib {
         );
     }
 
-    
     func assert_div{range_check_ptr}(value, div) -> () {
         let q = [range_check_ptr];
         let range_check_ptr = range_check_ptr + 1;
@@ -558,7 +557,99 @@ namespace uint384_lib {
             high=Uint384(d0=res6, d1=res8, d2=d10 + carry),
         );
     }
+    
+    func square_c{range_check_ptr}(a: Uint384) -> (low: Uint384, high: Uint384) {
+        alloc_locals;
+        let (a0, a1) = split_64(a.d0);
+        let (a2, a3) = split_64(a.d1);
+        let (a4, a5) = split_64(a.d2);
 
+	const HALF_SHIFT2 = 2*HALF_SHIFT;
+
+        let (res0, carry) = split_128(a0 * a0 + (a1 * a0) * HALF_SHIFT2);
+        let (res2, carry) = split_128(
+            a2 * a0 * 2 + a1 * a1 + (a3 * a0 + a2 * a1) * HALF_SHIFT2 + carry,
+        );
+        let (res4, carry) = split_128(
+	    (a4 * a0 + a3 * a1) * 2 + a2 * a2 + (a5 * a0 + a4 * a1 + a3 * a2) * HALF_SHIFT2 + carry,
+        );
+        let (res6, carry) = split_128(
+	    (a5 * a1 + a4 * a2) * 2 + a3 * a3 + (a5 * a2 + a4 * a3) * HALF_SHIFT2 + carry,
+        );
+        let (res8, carry) = split_128(
+            a5 * a3 * 2 + a4 * a4 + (a5 * a4) * HALF_SHIFT2 + carry
+        );
+        // let (res10, carry) = split_64(a5 * a5 + carry)
+
+        return (
+            low=Uint384(d0=res0, d1=res2, d2=res4),
+            high=Uint384(d0=res6, d1=res8, d2=a5 * a5 + carry),
+        );
+    }
+
+
+    func square_d{range_check_ptr}(a: Uint384) -> (low: Uint384, high: Uint384) {
+        alloc_locals;
+        let (a0, a1) = split_64(a.d0);
+        let (a2, a3) = split_64(a.d1);
+        let (a4, a5) = split_64(a.d2);
+
+	const HALF_SHIFT2 = 2*HALF_SHIFT;
+	local A0 = a0*HALF_SHIFT2;
+	local ad0_2 = a.d0*2;
+	local a12 = a1 + a2*HALF_SHIFT;
+
+        let (res0, carry) = split_128(a0*(ad0_2 - a0));
+        let (res2, carry) = split_128(
+	    a2*ad0_2 + a1*a1 + a3*A0 + carry,
+        );
+        let (res4, carry) = split_128(
+	    (a4*a.d0 + a3*a12)*2 + a2*a2 + a5*A0 + carry,
+        );
+        let (res6, carry) = split_128(
+	    (a5*a12 + a4*a.d1)*2 + a3*a3 + carry,
+        );
+        let (res8, carry) = split_128(
+	    a5*a3*2 + a4*(a4 + a5*HALF_SHIFT2) + carry
+        );
+        // let (res10, carry) = split_64(a5*a5 + carry)
+
+        return (
+            low=Uint384(d0=res0, d1=res2, d2=res4),
+            high=Uint384(d0=res6, d1=res8, d2=a5*a5 + carry),
+        );
+    }
+
+    func square_e{range_check_ptr}(a: Uint384) -> (low: Uint384, high: Uint384) {
+        alloc_locals;
+        let (a0, a1) = split_64(a.d0);
+        let (a2, a3) = split_64(a.d1);
+        let (a4, a5) = split_64(a.d2);
+
+	const HALF_SHIFT2 = 2*HALF_SHIFT;
+	local a0_2 = a0*2;
+	local a34 = a3 + a4*HALF_SHIFT2;
+
+        let (res0, carry) = split_128(a0*(a0 + a1*HALF_SHIFT2));
+        let (res2, carry) = split_128(
+	    a.d1*a0_2 + a1*(a1 + a2*HALF_SHIFT2) + carry,
+        );
+        let (res4, carry) = split_128(
+	    a.d2*a0_2 + (a3 + a34)*a1 + a2*(a2 + a3*HALF_SHIFT2) + carry,
+        );
+        let (res6, carry) = split_128(
+	    (a5*a1 + a.d2*a2)*2 + a3*a34 + carry,
+        );
+        let (res8, carry) = split_128(
+	    a5*(a3 + a34) + a4*a4 + carry
+        );
+        // let (res10, carry) = split_64(a5*a5 + carry)
+
+        return (
+            low=Uint384(d0=res0, d1=res2, d2=res4),
+            high=Uint384(d0=res6, d1=res8, d2=a5*a5 + carry),
+        );
+    }
 
     // Returns the floor value of the square root of a Uint384 integer.
     func sqrt{range_check_ptr}(a: Uint384) -> (res: Uint384) {
@@ -598,7 +689,7 @@ namespace uint384_lib {
         let range_check_ptr = range_check_ptr + 2;
 
         // Verify that n >= root**2.
-        let (root_squared, carry) = mul_d(root, root);
+        let (root_squared, carry) = square_e(root);
         assert carry = Uint384(0, 0, 0);
         let (check_lower_bound) = le(root_squared, a);
         assert check_lower_bound = 1;
@@ -608,7 +699,7 @@ namespace uint384_lib {
         // (root+1)**2 = 2**384. Therefore next_root_squared - 1 = 2**384 - 1, as desired.
         let (next_root, add_carry) = add(root, Uint384(1, 0, 0));
         assert add_carry = 0;
-        let (next_root_squared, _) = mul_d(next_root, next_root);
+        let (next_root_squared, _) = square_e(next_root);
         let (next_root_squared_minus_one) = sub(next_root_squared, Uint384(1, 0, 0));
         let (check_upper_bound) = le(a, next_root_squared_minus_one);
         assert check_upper_bound = 1;
