@@ -685,8 +685,9 @@ namespace uint384_lib {
         [range_check_ptr] = root.d0;
 
         // Check that 0 <= d1 < 2**64, equivalent to checking 0<= d1*2**64 < 2**128
-        assert [range_check_ptr + 1] = (root.d1) * (2 ** 64) + 1;
-        let range_check_ptr = range_check_ptr + 2;
+        assert [range_check_ptr + 1] = root.d1;
+        assert [range_check_ptr + 2] = HALF_SHIFT - 1 - root.d1;
+        let range_check_ptr = range_check_ptr + 3;
 
         // Verify that n >= root**2.
         let (root_squared, carry) = square_e(root);
