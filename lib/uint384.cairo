@@ -919,6 +919,49 @@ namespace uint384_lib {
         return (quotient=quotient, remainder=remainder);
     }
 
+    // Unsigned integer division by 2. Returns the quotient and the remainder.
+    func unsigned_div_rem2{range_check_ptr}(a: Uint384) -> (
+        quotient: Uint384, remainder: felt
+    ) {
+        alloc_locals;
+        local quotient: Uint384;
+        local remainder: felt;
+
+        %{
+            def split(num: int, num_bits_shift: int, length: int):
+                a = []
+                for _ in range(length):
+                    a.append( num & ((1 << num_bits_shift) - 1) )
+                    num = num >> num_bits_shift
+                return tuple(a)
+
+            def pack(z, num_bits_shift: int) -> int:
+                limbs = (z.d0, z.d1, z.d2)
+                return sum(limb << (num_bits_shift * i) for i, limb in enumerate(limbs))
+
+            a = pack(ids.a, num_bits_shift = 128)
+            quotient, remainder = divmod(a, 2)
+
+            quotient_split = split(quotient, num_bits_shift=128, length=3)
+            assert len(quotient_split) == 3
+
+            ids.quotient.d0 = quotient_split[0]
+            ids.quotient.d1 = quotient_split[1]
+            ids.quotient.d2 = quotient_split[2]
+
+            ids.remainder = remainder
+        %}
+        let (res_mul: Uint384, carry: felt) = add(quotient, quotient);
+        assert carry = 0;
+
+        let (check_val: Uint384, add_carry: felt) = add(res_mul, Uint384(remainder,0,0));
+        assert check_val = a;
+        assert add_carry = 0;
+
+        assert remainder = remainder*remainder;
+        return (quotient=quotient, remainder=remainder);
+    }
+
     // Returns the bitwise NOT of an integer.
     func not{range_check_ptr}(a: Uint384) -> (res: Uint384) {
         return (Uint384(d0=ALL_ONES - a.d0, d1=ALL_ONES - a.d1, d2=ALL_ONES - a.d2),);
