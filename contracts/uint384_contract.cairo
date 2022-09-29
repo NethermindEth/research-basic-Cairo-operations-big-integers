@@ -3,7 +3,7 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin, BitwiseBuiltin
 from starkware.cairo.common.uint256 import Uint256, uint256_sqrt
-from lib.uint384 import uint384_lib, Uint384
+from lib.uint384 import uint384_lib, Uint384, Uint384_expand
 
 // StarkNet contract implementing view calls to lib/uint384.cairo's functions
 
@@ -60,6 +60,18 @@ func uint384_mul_s{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, hi
 @view
 func uint384_mul_kar{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, high: Uint384) {
     let (low: Uint384, high: Uint384) = uint384_lib.mul_kar(a, b);
+    return (low, high);
+}
+
+@view
+func uint384_expand{range_check_ptr}(a: Uint384) -> (e: Uint384_expand) {
+    let (e: Uint384_expand) = uint384_lib.expand(a);
+    return (e=e);
+}
+
+@view
+func uint384_mul_expanded{range_check_ptr}(a: Uint384, b: Uint384_expand) -> (low: Uint384, high: Uint384) {
+    let (low: Uint384, high: Uint384) = uint384_lib.mul_expanded(a, b);
     return (low, high);
 }
 
