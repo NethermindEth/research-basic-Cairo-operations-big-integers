@@ -887,8 +887,12 @@ namespace uint384_lib {
                 limbs = (z.d0, z.d1, z.d2)
                 return sum(limb << (num_bits_shift * i) for i, limb in enumerate(limbs))
 
+            def pack2(z, num_bits_shift: int) -> int:
+                limbs = (z.b01, z.b23, z.b45)
+                return sum(limb << (num_bits_shift * i) for i, limb in enumerate(limbs))
+
             a = pack(ids.a, num_bits_shift = 128)
-            div = pack(ids.div2, num_bits_shift = 128)
+            div = pack2(ids.div, num_bits_shift = 128)
             quotient, remainder = divmod(a, div)
 
             quotient_split = split(quotient, num_bits_shift=128, length=3)
