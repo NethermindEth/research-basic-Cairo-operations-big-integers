@@ -153,6 +153,14 @@ func uint384_unsigned_div_rem{range_check_ptr}(a: Uint384, div: Uint384) -> (
     return (quotient, remainder);
 }
 
+@view
+func uint384_unsigned_div_rem_expanded{range_check_ptr}(a: Uint384, div: Uint384_expand) -> (
+    quotient: Uint384, remainder: Uint384
+) {
+    let (quotient: Uint384, remainder: Uint384) = uint384_lib.unsigned_div_rem_expanded(a, div);
+    return (quotient, remainder);
+}
+
 // Signed integer division between two integers. Returns the quotient and the remainder.
 @view
 func uint384_signed_div_rem{range_check_ptr}(a: Uint384, div: Uint384) -> (
