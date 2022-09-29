@@ -1,5 +1,5 @@
 import pytest
-from utils import split
+from utils import split, split2
 from utils import elliptic_curve_field_modulus as p
 
 @pytest.mark.asyncio
@@ -291,7 +291,7 @@ async def test_benchmark_field_arithmetic(field_arithmetic_contract):
 
     x_split = split(x, num_bits_shift=128, length=3)
     y_split = split(y, num_bits_shift=128, length=3)
-    p_split = split(p, num_bits_shift=128, length=3)
+    p_split = split2(p, num_bits_shift=64, length=7)
 
     execution_info = await field_arithmetic_contract.field_arithmetic_add(x_split, y_split, p_split).call()
     
@@ -363,7 +363,7 @@ async def test_benchmark_field_arithmetic(field_arithmetic_contract):
     "%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter,
     )
 
-    execution_info = await field_arithmetic_contract.is_square_non_optimized(x_split, y_split, p_split).call()
+    execution_info = await field_arithmetic_contract.is_square_non_optimized(x_split, p_split, split((p-1)//2)).call()
     
     print(
     "%20s" % "is square",

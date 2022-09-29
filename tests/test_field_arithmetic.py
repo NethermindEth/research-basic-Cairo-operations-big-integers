@@ -5,20 +5,12 @@ from starkware.starknet.testing.starknet import Starknet
 from starkware.python.math_utils import div_mod
 from hypothesis import given, strategies as st, settings
 from sympy import exp_polar
-from utils import split, pack
+from utils import split, split2, pack
 from utils import elliptic_curve_field_modulus as p
 from sqrt_mod_p import get_square_root_mod_p
 
 
 # Tests all functions from field_arithmetic_contract
-
-"""
-FAILED tests/test_field_arithmetic.py::test_field_arithmetic_div - starkware.starkware_utils.error_handling.StarkException: (500...
-FAILED tests/test_field_arithmetic.py::test_fq_is_square - AttributeError: 'StarknetContract' object has no attribute 'is_square'
-FAILED tests/test_field_arithmetic.py::test_fq_is_square_specific - AttributeError: 'StarknetContract' object has no attribute '...
-FAILED tests/test_uint384.py::test_signed_comparison_functions - assert True == (-52399423255656892...8034360846353810651 < -571...
-====================================== 4 failed, 20 passed, 6 warnings in 7589.29s (2:06:29) ======================================
-"""
 
 @given(
     x=st.integers(min_value=1, max_value=2**384 - 1),
@@ -32,7 +24,7 @@ async def test_field_arithmetic_add(x, y, field_arithmetic_contract):
 
     x_split = split(x, num_bits_shift=128, length=3)
     y_split = split(y, num_bits_shift=128, length=3)
-    p_split = split(p, num_bits_shift=128, length=3)
+    p_split = split2(p, num_bits_shift=64, length=7)
 
     execution_info = await field_arithmetic_contract.field_arithmetic_add(
         x_split, y_split, p_split
@@ -59,7 +51,7 @@ async def test_field_arithmetic_sub(x, y, field_arithmetic_contract):
 
     x_split = split(x, num_bits_shift=128, length=3)
     y_split = split(y, num_bits_shift=128, length=3)
-    p_split = split(p, num_bits_shift=128, length=3)
+    p_split = split2(p, num_bits_shift=64, length=7)
 
     execution_info = await field_arithmetic_contract.field_arithmetic_sub(
         x_split, y_split, p_split
@@ -82,7 +74,7 @@ async def test_field_arithmetic_mul(x, y, field_arithmetic_contract):
 
     x_split = split(x, num_bits_shift=128, length=3)
     y_split = split(y, num_bits_shift=128, length=3)
-    p_split = split(p, num_bits_shift=128, length=3)
+    p_split = split2(p, num_bits_shift=64, length=7)
 
     execution_info = await field_arithmetic_contract.field_arithmetic_mul(
         x_split, y_split, p_split
@@ -103,7 +95,7 @@ async def test_field_arithmetic_square(x, field_arithmetic_contract):
     print(x)
 
     x_split = split(x, num_bits_shift=128, length=3)
-    p_split = split(p, num_bits_shift=128, length=3)
+    p_split = split2(p, num_bits_shift=64, length=7)
 
     execution_info = await field_arithmetic_contract.field_arithmetic_square(
         x_split, p_split
@@ -128,7 +120,7 @@ async def test_field_arithmetic_div(x, y, field_arithmetic_contract):
 
     x_split = split(x, num_bits_shift=128, length=3)
     y_split = split(y, num_bits_shift=128, length=3)
-    p_split = split(p, num_bits_shift=128, length=3)
+    p_split = split2(p, num_bits_shift=64, length=7)
 
     execution_info = await field_arithmetic_contract.field_arithmetic_div_b(
         x_split, y_split, p_split
@@ -155,7 +147,7 @@ async def test_field_arithmetic_pow(x, exp, field_arithmetic_contract):
 
     x_split = split(x, num_bits_shift=128, length=3)
     exp_split = split(exp, num_bits_shift=128, length=3)
-    p_split = split(p, num_bits_shift=128, length=3)
+    p_split = split2(p, num_bits_shift=64, length=7)
 
     execution_info = await field_arithmetic_contract.field_arithmetic_pow(
         x_split, exp_split, p_split
@@ -179,7 +171,7 @@ async def test_fq_is_square(field_arithmetic_contract, x):
     contract = field_arithmetic_contract
 
     execution_info = await contract.is_square_non_optimized(
-        split(x, 128, 3), split(p, 128, 3), split(p_minus_one_div_2, 128, 3)
+        split(x, 128, 3), split2(p, 64, 7), split(p_minus_one_div_2, 128, 3)
     ).call()
 
     result = execution_info.result[0]
@@ -201,7 +193,7 @@ async def test_fq_is_square_specific(field_arithmetic_contract):
     contract = field_arithmetic_contract
 
     execution_info = await contract.is_square_non_optimized(
-        split(x, 128, 3), split(p, 128, 3), split(p_minus_one_div_2, 128, 3)
+        split(x, 128, 3), split2(p, 64, 7), split(p_minus_one_div_2, 128, 3)
     ).call()
 
     result = execution_info.result[0]
@@ -232,7 +224,7 @@ async def test_fq_get_sqrt(field_arithmetic_contract, x):
     generator = 2 
     python_success, python_sqrt = get_square_root_mod_p(x, p)
     
-    execution_info = await contract.get_square_root(split(x), split(p), split(generator)).call()
+    execution_info = await contract.get_square_root(split(x), split2(p), split(generator)).call()
 
     success = execution_info.result[0]
     sqrt = execution_info.result[1]

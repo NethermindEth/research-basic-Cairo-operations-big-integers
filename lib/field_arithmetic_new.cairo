@@ -1,4 +1,3 @@
-//Depricated: use field_arithmetic_new.cairo instead
 from starkware.cairo.common.bitwise import bitwise_and, bitwise_or, bitwise_xor
 from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
 from starkware.cairo.common.math import assert_in_range, assert_le, assert_nn_le, assert_not_zero
@@ -6,20 +5,20 @@ from starkware.cairo.common.math_cmp import is_le
 from starkware.cairo.common.pow import pow
 from starkware.cairo.common.registers import get_ap, get_fp_and_pc
 // Import uint384 files (path may change in the future)
-from lib.uint384 import uint384_lib, Uint384
+from lib.uint384 import uint384_lib, Uint384, Uint384_expand
 from lib.uint384_extension import uint384_extension_lib, Uint768
 
 // Functions for operating elements in a finite field F_p (i.e. modulo a prime p), with p of at most 384 bits
 
 namespace field_arithmetic {
     // Computes (a + b) modulo p .
-    func add{range_check_ptr}(a: Uint384, b: Uint384, p: Uint384) -> (res: Uint384) {
+    func add{range_check_ptr}(a: Uint384, b: Uint384, p: Uint384_expand) -> (res: Uint384) {
         let (sum: Uint384, carry) = uint384_lib.add(a, b);
         let sum_with_carry: Uint768 = Uint768(sum.d0, sum.d1, sum.d2, carry, 0, 0);
 
         let (
             quotient: Uint768, remainder: Uint384
-        ) = uint384_extension_lib.unsigned_div_rem_uint768_by_uint384(sum_with_carry, p);
+        ) = uint384_extension_lib.unsigned_div_rem_uint768_by_uint384_expand(sum_with_carry, p);
         return (remainder,);
     }
 
@@ -27,7 +26,7 @@ namespace field_arithmetic {
     // NOTE: Expects a and b to be reduced modulo p (i.e. between 0 and p-1). The function will revert if a > p.
     // NOTE: To reduce a, take the remainder of uint384_lin.unsigned_div_rem(a, p), and similarly for b.
     // @dev First it computes res =(a-b) mod p in a hint and then checks outside of the hint that res + b = a modulo p
-    func sub_reduced_a_and_reduced_b{range_check_ptr}(a: Uint384, b: Uint384, p: Uint384) -> (
+    func sub_reduced_a_and_reduced_b{range_check_ptr}(a: Uint384, b: Uint384, p: Uint384_expand) -> (
         res: Uint384
     ) {
         alloc_locals;
@@ -44,9 +43,13 @@ namespace field_arithmetic {
                 limbs = (z.d0, z.d1, z.d2)
                 return sum(limb << (num_bits_shift * i) for i, limb in enumerate(limbs))
 
+            def pack2(z, num_bits_shift: int) -> int:
+                limbs = (z.b01, z.b23, z.b45)
+                return sum(limb << (num_bits_shift * i) for i, limb in enumerate(limbs))
+
             a = pack(ids.a, num_bits_shift = 128)
             b = pack(ids.b, num_bits_shift = 128)
-            p = pack(ids.p, num_bits_shift = 128)
+            p = pack2(ids.p, num_bits_shift = 128)
 
             res = (a - b) % p
 
@@ -63,28 +66,28 @@ namespace field_arithmetic {
     }
 
     // Computes a * b modulo p
-    func mul{range_check_ptr}(a: Uint384, b: Uint384, p: Uint384) -> (res: Uint384) {
+    func mul{range_check_ptr}(a: Uint384, b: Uint384, p: Uint384_expand) -> (res: Uint384) {
         let (low: Uint384, high: Uint384) = uint384_lib.mul_d(a, b);
         let full_mul_result: Uint768 = Uint768(low.d0, low.d1, low.d2, high.d0, high.d1, high.d2);
         let (
             quotient: Uint768, remainder: Uint384
-        ) = uint384_extension_lib.unsigned_div_rem_uint768_by_uint384(full_mul_result, p);
+        ) = uint384_extension_lib.unsigned_div_rem_uint768_by_uint384_expand(full_mul_result, p);
         return (remainder,);
     }
 
     // Computes a**2 modulo p
-    func square{range_check_ptr}(a: Uint384, p: Uint384) -> (res: Uint384) {
+    func square{range_check_ptr}(a: Uint384, p: Uint384_expand) -> (res: Uint384) {
         let (low: Uint384, high: Uint384) = uint384_lib.square_e(a);
         let full_mul_result: Uint768 = Uint768(low.d0, low.d1, low.d2, high.d0, high.d1, high.d2);
         let (
             quotient: Uint768, remainder: Uint384
-        ) = uint384_extension_lib.unsigned_div_rem_uint768_by_uint384(full_mul_result, p);
+        ) = uint384_extension_lib.unsigned_div_rem_uint768_by_uint384_expand(full_mul_result, p);
         return (remainder,);
     }
 
     // Computes a * b^{-1} modulo p
     // NOTE: The modular inverse of b modulo p is computed in a hint and verified outside the hind with a multiplicaiton
-    func div{range_check_ptr}(a: Uint384, b: Uint384, p: Uint384) -> (res: Uint384) {
+    func div{range_check_ptr}(a: Uint384, b: Uint384, p: Uint384_expand) -> (res: Uint384) {
         alloc_locals;
         local b_inverse_mod_p: Uint384;
         %{
@@ -101,9 +104,13 @@ namespace field_arithmetic {
                 limbs = (z.d0, z.d1, z.d2)
                 return sum(limb << (num_bits_shift * i) for i, limb in enumerate(limbs))
 
+            def pack2(z, num_bits_shift: int) -> int:
+                limbs = (z.b01, z.b23, z.b45)
+                return sum(limb << (num_bits_shift * i) for i, limb in enumerate(limbs))
+
             a = pack(ids.a, num_bits_shift = 128)
             b = pack(ids.b, num_bits_shift = 128)
-            p = pack(ids.p, num_bits_shift = 128)
+            p = pack2(ids.p, num_bits_shift = 128)
             # For python3.8 and above the modular inverse can be computed as follows:
             # b_inverse_mod_p = pow(b, -1, p)
             # Instead we use the python3.7-friendly function div_mod from starkware.python.math_utils
@@ -127,7 +134,7 @@ namespace field_arithmetic {
     // NOTE: result is computed in a hint and verified outside the hind with a multiplicaiton
     // requires a < p, the function will revert otherwise
     // might give indeterminate answers if a=b=0
-    func div_b{range_check_ptr}(a: Uint384, b: Uint384, p: Uint384) -> (res: Uint384) {
+    func div_b{range_check_ptr}(a: Uint384, b: Uint384, p: Uint384_expand) -> (res: Uint384) {
         alloc_locals;
         local ans: Uint384;
         %{
@@ -144,9 +151,13 @@ namespace field_arithmetic {
                 limbs = (z.d0, z.d1, z.d2)
                 return sum(limb << (num_bits_shift * i) for i, limb in enumerate(limbs))
 
+            def pack2(z, num_bits_shift: int) -> int:
+                limbs = (z.b01, z.b23, z.b45)
+                return sum(limb << (num_bits_shift * i) for i, limb in enumerate(limbs))
+
             a = pack(ids.a, num_bits_shift = 128)
             b = pack(ids.b, num_bits_shift = 128)
-            p = pack(ids.p, num_bits_shift = 128)
+            p = pack2(ids.p, num_bits_shift = 128)
             # For python3.8 and above the modular inverse can be computed as follows:
             # b_inverse_mod_p = pow(b, -1, p)
             # Instead we use the python3.7-friendly function div_mod from starkware.python.math_utils
@@ -162,14 +173,14 @@ namespace field_arithmetic {
         let (b_times_ans) = mul(b, ans, p);
         assert b_times_ans = a;
 
-	let (is_valid) = uint384_lib.lt(ans, p);
+	let (is_valid) = uint384_lib.lt(ans, Uint384(p.b01,p.b23,p.b45));
         assert is_valid = 1;
 
         return (ans,);
     }
 
     // Computes (a**exp) % p. Uses the fast exponentiation algorithm, so it takes at most 384 squarings: https://en.wikipedia.org/wiki/Exponentiation_by_squaring
-    func pow{range_check_ptr}(a: Uint384, exp: Uint384, p: Uint384) -> (res: Uint384) {
+    func pow{range_check_ptr}(a: Uint384, exp: Uint384, p: Uint384_expand) -> (res: Uint384) {
         alloc_locals;
         let (is_exp_zero) = uint384_lib.eq(exp, Uint384(0, 0, 0));
 
@@ -181,11 +192,11 @@ namespace field_arithmetic {
         if (is_exp_one == 1) {
             // If exp = 1, it is possible that `a` is not reduced mod p,
             // so we check and reduce if necessary
-            let (is_a_lt_p) = uint384_lib.lt(a, p);
+	    let (is_a_lt_p) = uint384_lib.lt(a, Uint384(p.b01,p.b23,p.b45));
             if (is_a_lt_p == 1) {
                 return (a,);
             } else {
-                let (quotient, remainder) = uint384_lib.unsigned_div_rem(a, p);
+                let (quotient, remainder) = uint384_lib.unsigned_div_rem_expanded(a, p);
                 return (remainder,);
             }
         }
@@ -211,7 +222,7 @@ namespace field_arithmetic {
     // `p_minus_one_div_2` is (p-1)/2. It is passed as an argument rather than computed, since for most applications
     // p (and thus (p-1)/2) will be hardcoded and this library wrapped around with p fixed to the hardcoded value
     func is_square_non_optimized{range_check_ptr, bitwise_ptr: BitwiseBuiltin*}(
-        x: Uint384, p: Uint384, p_minus_one_div_2: Uint384
+        x: Uint384, p: Uint384_expand, p_minus_one_div_2: Uint384
     ) -> (bool: felt) {
         alloc_locals;
         let (is_x_zero) = uint384_lib.eq(x, Uint384(0, 0, 0));
@@ -237,7 +248,7 @@ namespace field_arithmetic {
     // 3. Check in Cairo that r**2 = x (mod p) or r**2 = gx (mod p), respectively
     // NOTE: The function assumes that 0 <= x < p
     func get_square_root{range_check_ptr, bitwise_ptr: BitwiseBuiltin*}(
-        x: Uint384, p: Uint384, generator: Uint384
+        x: Uint384, p: Uint384_expand, generator: Uint384
     ) -> (success: felt, res: Uint384) {
         alloc_locals;
 
@@ -267,10 +278,14 @@ namespace field_arithmetic {
                 limbs = (z.d0, z.d1, z.d2)
                 return sum(limb << (num_bits_shift * i) for i, limb in enumerate(limbs))
 
+            def pack2(z, num_bits_shift: int = 128) -> int:
+                limbs = (z.b01, z.b23, z.b45)
+                return sum(limb << (num_bits_shift * i) for i, limb in enumerate(limbs))
+
 
             generator = pack(ids.generator)
             x = pack(ids.x)
-            p = pack(ids.p)
+            p = pack2(ids.p)
 
             success_x = is_quad_residue(x, p)
             root_x = sqrt(x, p) if success_x else None
