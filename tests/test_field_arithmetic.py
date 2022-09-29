@@ -95,6 +95,27 @@ async def test_field_arithmetic_mul(x, y, field_arithmetic_contract):
 
 @given(
     x=st.integers(min_value=1, max_value=2**384 - 1),
+)
+@settings(deadline=None)
+@pytest.mark.asyncio
+async def test_field_arithmetic_square(x, field_arithmetic_contract):
+
+    print(x)
+
+    x_split = split(x, num_bits_shift=128, length=3)
+    p_split = split(p, num_bits_shift=128, length=3)
+
+    execution_info = await field_arithmetic_contract.field_arithmetic_square(
+        x_split, p_split
+    ).call()
+    result_split = execution_info.result
+    result = pack(result_split[0], num_bits_shift=128)
+
+    assert result == (x * x) % p
+
+
+@given(
+    x=st.integers(min_value=1, max_value=2**384 - 1),
     y=st.integers(min_value=1, max_value=2**384 - 1),
 )
 @settings(deadline=None)
@@ -103,11 +124,13 @@ async def test_field_arithmetic_div(x, y, field_arithmetic_contract):
 
     print(x, y)
 
+    x = x % p
+
     x_split = split(x, num_bits_shift=128, length=3)
     y_split = split(y, num_bits_shift=128, length=3)
     p_split = split(p, num_bits_shift=128, length=3)
 
-    execution_info = await field_arithmetic_contract.field_arithmetic_div(
+    execution_info = await field_arithmetic_contract.field_arithmetic_div_b(
         x_split, y_split, p_split
     ).call()
     result_split = execution_info.result

@@ -71,6 +71,16 @@ namespace field_arithmetic {
         return (remainder,);
     }
 
+    // Computes a**2 modulo p
+    func square{range_check_ptr}(a: Uint384, p: Uint384) -> (res: Uint384) {
+        let (low: Uint384, high: Uint384) = uint384_lib.square_e(a);
+        let full_mul_result: Uint768 = Uint768(low.d0, low.d1, low.d2, high.d0, high.d1, high.d2);
+        let (
+            quotient: Uint768, remainder: Uint384
+        ) = uint384_extension_lib.unsigned_div_rem_uint768_by_uint384(full_mul_result, p);
+        return (remainder,);
+    }
+
     // Computes a * b^{-1} modulo p
     // NOTE: The modular inverse of b modulo p is computed in a hint and verified outside the hind with a multiplicaiton
     func div{range_check_ptr}(a: Uint384, b: Uint384, p: Uint384) -> (res: Uint384) {
@@ -110,6 +120,51 @@ namespace field_arithmetic {
 
         let (res: Uint384) = mul(a, b_inverse_mod_p, p);
         return (res,);
+    }
+
+    // Computes a * b^{-1} modulo p
+    // NOTE: result is computed in a hint and verified outside the hind with a multiplicaiton
+    // requires a < p, the function will revert otherwise
+    // might give indeterminate answers if a=b=0
+    func div_b{range_check_ptr}(a: Uint384, b: Uint384, p: Uint384) -> (res: Uint384) {
+        alloc_locals;
+        local ans: Uint384;
+        %{
+            from starkware.python.math_utils import div_mod
+
+            def split(num: int, num_bits_shift: int, length: int):
+                a = []
+                for _ in range(length):
+                    a.append( num & ((1 << num_bits_shift) - 1) )
+                    num = num >> num_bits_shift
+                return tuple(a)
+
+            def pack(z, num_bits_shift: int) -> int:
+                limbs = (z.d0, z.d1, z.d2)
+                return sum(limb << (num_bits_shift * i) for i, limb in enumerate(limbs))
+
+            a = pack(ids.a, num_bits_shift = 128)
+            b = pack(ids.b, num_bits_shift = 128)
+            p = pack(ids.p, num_bits_shift = 128)
+            # For python3.8 and above the modular inverse can be computed as follows:
+            # b_inverse_mod_p = pow(b, -1, p)
+            # Instead we use the python3.7-friendly function div_mod from starkware.python.math_utils
+            b_inverse_mod_p = div_mod(1, b, p)
+
+            ans = (b_inverse_mod_p*a) %p
+            ans_split = split(ans, num_bits_shift=128, length=3)
+
+            ids.ans.d0 = ans_split[0]
+            ids.ans.d1 = ans_split[1]
+            ids.ans.d2 = ans_split[2]
+        %}
+        let (b_times_ans) = mul(b, ans, p);
+        assert b_times_ans = a;
+
+	let (is_valid) = uint384_lib.lt(ans, p);
+        assert is_valid = 1;
+
+        return (ans,);
     }
 
     // Computes (a**exp) % p. Uses the fast exponentiation algorithm, so it takes at most 384 squarings: https://en.wikipedia.org/wiki/Exponentiation_by_squaring

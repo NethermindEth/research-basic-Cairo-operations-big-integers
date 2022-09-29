@@ -36,12 +36,29 @@ func field_arithmetic_mul{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_
     return (res,);
 }
 
+// Computes a ** 2 modulo p
+@view
+func field_arithmetic_square{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    a: Uint384, p: Uint384
+) -> (res: Uint384) {
+    let (res: Uint384) = field_arithmetic.square(a, p);
+    return (res,);
+}
+
 // Computes a * b^{-1} modulo p
 @view
 func field_arithmetic_div{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     a: Uint384, b: Uint384, p: Uint384
 ) -> (res: Uint384) {
     let (res: Uint384) = field_arithmetic.div(a, b, p);
+    return (res,);
+}
+
+@view
+func field_arithmetic_div_b{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    a: Uint384, b: Uint384, p: Uint384
+) -> (res: Uint384) {
+    let (res: Uint384) = field_arithmetic.div_b(a, b, p);
     return (res,);
 }
 
