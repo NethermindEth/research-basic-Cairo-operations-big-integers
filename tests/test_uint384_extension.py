@@ -40,7 +40,10 @@ async def test_mul_uint768_by_uint384(x, y, uint384_extension_contract):
     x_split = split(x, num_bits_shift=128, length=6)
     y_split = split(y, num_bits_shift=128, length=3)
 
-    execution_info = await uint384_extension_contract.uint384_mul_uint768_by_uint384_d(x_split, y_split).call()
+    #execution_info = await uint384_extension_contract.uint384_mul_uint768_by_uint384_d(x_split, y_split).call()
+    execution_info = await uint384_extension_contract.uint384_expand(y_split).call()
+    y_exp = execution_info.result[0]
+    execution_info = await uint384_extension_contract.uint384_mul_uint768_by_uint384_expand(x_split, y_exp).call()
     result_split = execution_info.result
     low = pack(result_split[0], num_bits_shift=128)
     high = pack(result_split[1], num_bits_shift=128)
@@ -62,9 +65,12 @@ async def test_uint384_unsigned_div_rem_uint768_by_uint384(x, y, uint384_extensi
     x_split = split(x, num_bits_shift=128, length=6)
     y_split = split(y, num_bits_shift=128, length=3)
 
-    execution_info = await uint384_extension_contract.uint384_unsigned_div_rem_uint768_by_uint384(
-        x_split, y_split
-    ).call()
+    #execution_info = await uint384_extension_contract.uint384_unsigned_div_rem_uint768_by_uint384_expand(
+    #    x_split, y_split
+    #).call()
+    execution_info = await uint384_extension_contract.uint384_expand(y_split).call()
+    y_exp = execution_info.result[0]
+    execution_info = await uint384_extension_contract.uint384_unsigned_div_rem_uint768_by_uint384_expand(x_split, y_exp).call()
     result_split = execution_info.result
     quotient = pack(result_split[0], num_bits_shift=128)
     reminder = pack(result_split[1], num_bits_shift=128)

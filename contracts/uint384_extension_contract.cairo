@@ -4,7 +4,7 @@
 from starkware.cairo.common.cairo_builtins import HashBuiltin, BitwiseBuiltin
 from starkware.cairo.common.uint256 import Uint256, uint256_sqrt
 // Import uint384 files (path may change in the future)
-from lib.uint384 import uint384_lib, Uint384
+from lib.uint384 import uint384_lib, Uint384, Uint384_expand
 from lib.uint384_extension import uint384_extension_lib, Uint768
 
 // StarkNet contract implementing view calls to lib/uint384_extension.cairo's functions
@@ -69,6 +69,20 @@ func uint384_mul_uint768_by_uint384_Toom25{range_check_ptr}(a: Uint768, b: Uint3
     return (low, high);
 }
 
+@view
+func uint384_expand{range_check_ptr}(a: Uint384) -> (e: Uint384_expand) {
+    let (e: Uint384_expand) = uint384_lib.expand(a);
+    return (e=e);
+}
+
+@view
+func uint384_mul_uint768_by_uint384_expand{range_check_ptr}(a: Uint768, b: Uint384_expand) -> (
+    low: Uint768, high: Uint384
+) {
+    let (low: Uint768, high: Uint384) = uint384_extension_lib.mul_uint768_by_uint384_expanded(a, b);
+    return (low, high);
+}
+
 // Unsigned integer division between a 768-bit integer and a 384-bit integer. Returns the quotient (768 bits) and the remainder (384 bits).
 // Conforms to EVM specifications: division by 0 yields 0.
 @view
@@ -78,5 +92,16 @@ func uint384_unsigned_div_rem_uint768_by_uint384{range_check_ptr}(a: Uint768, di
     let (
         quotient: Uint768, remainder: Uint384
     ) = uint384_extension_lib.unsigned_div_rem_uint768_by_uint384(a, div);
+    return (quotient, remainder);
+}
+
+// Unsigned integer division between a 768-bit integer and a 384-bit integer. Returns the quotient (768 bits) and the remainder (384 bits).
+@view
+func uint384_unsigned_div_rem_uint768_by_uint384_expand{range_check_ptr}(a: Uint768, div: Uint384_expand) -> (
+    quotient: Uint768, remainder: Uint384
+) {
+    let (
+        quotient: Uint768, remainder: Uint384
+    ) = uint384_extension_lib.unsigned_div_rem_uint768_by_uint384_expand(a, div);
     return (quotient, remainder);
 }
