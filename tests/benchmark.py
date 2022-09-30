@@ -286,8 +286,8 @@ async def test_benchmark_field_arithmetic(field_arithmetic_contract):
     "%-10s" % "builtins",
     )
 
-    x = 2 ** 360
-    y = 2 ** 360
+    x = 2 ** 360 - 1
+    y = 2 ** 360 - 1
 
     x_split = split(x, num_bits_shift=128, length=3)
     y_split = split(y, num_bits_shift=128, length=3)
@@ -317,6 +317,18 @@ async def test_benchmark_field_arithmetic(field_arithmetic_contract):
     
     print(
     "%20s" % "mul",
+    "|",
+    "%20s" % execution_info.call_info.execution_resources.n_steps,
+    "|",
+    "%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter,
+    )
+
+    execution_info = await field_arithmetic_contract.uint384_expand(y_split).call()
+    y_exp = execution_info.result[0]
+    execution_info = await field_arithmetic_contract.field_arithmetic_mul_expanded(x_split, y_exp, p_split).call()
+    
+    print(
+    "%20s" % "mul exp",
     "|",
     "%20s" % execution_info.call_info.execution_resources.n_steps,
     "|",
@@ -357,6 +369,16 @@ async def test_benchmark_field_arithmetic(field_arithmetic_contract):
     
     print(
     "%20s" % "pow",
+    "|",
+    "%20s" % execution_info.call_info.execution_resources.n_steps,
+    "|",
+    "%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter,
+    )
+    
+    execution_info = await field_arithmetic_contract.field_arithmetic_pow_b(x_split, y_split, p_split).call()
+    
+    print(
+    "%20s" % "pow b",
     "|",
     "%20s" % execution_info.call_info.execution_resources.n_steps,
     "|",

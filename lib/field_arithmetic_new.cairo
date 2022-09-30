@@ -74,6 +74,16 @@ namespace field_arithmetic {
         ) = uint384_extension_lib.unsigned_div_rem_uint768_by_uint384_expand(full_mul_result, p);
         return (remainder,);
     }
+    
+    // Computes a * b modulo p
+    func mul_expanded{range_check_ptr}(a: Uint384, b: Uint384_expand, p: Uint384_expand) -> (res: Uint384) {
+        let (low: Uint384, high: Uint384) = uint384_lib.mul_expanded(a, b);
+        let full_mul_result: Uint768 = Uint768(low.d0, low.d1, low.d2, high.d0, high.d1, high.d2);
+        let (
+            quotient: Uint768, remainder: Uint384
+        ) = uint384_extension_lib.unsigned_div_rem_uint768_by_uint384_expand(full_mul_result, p);
+        return (remainder,);
+    }
 
     // Computes a**2 modulo p
     func square{range_check_ptr}(a: Uint384, p: Uint384_expand) -> (res: Uint384) {
@@ -201,22 +211,66 @@ namespace field_arithmetic {
             }
         }
 
-        let (exp_div_2, remainder) = uint384_lib.unsigned_div_rem(exp, Uint384(2, 0, 0));
-        let (is_remainder_zero) = uint384_lib.eq(remainder, Uint384(0, 0, 0));
+        let (exp_div_2, rem) = uint384_lib.unsigned_div_rem2(exp);
+        //let (is_remainder_zero) = uint384_lib.eq(remainder, Uint384(0, 0, 0));
 
-        if (is_remainder_zero == 1) {
+        if (rem == 0) {
             // NOTE: Code is repeated in the if-else to avoid declaring a_squared as a local variable
-            let (a_squared: Uint384) = mul(a, a, p);
+            let (a_squared: Uint384) = square(a, p);
             let (res) = pow(a_squared, exp_div_2, p);
             return (res,);
         } else {
-            let (a_squared: Uint384) = mul(a, a, p);
+            let (a_squared: Uint384) = square(a, p);
             let (res) = pow(a_squared, exp_div_2, p);
             let (res_mul) = mul(a, res, p);
             return (res_mul,);
         }
     }
+    
+    // Computes (a**exp) % p. Uses the fast exponentiation algorithm, so it takes at most 384 squarings
+    func pow_expanded{range_check_ptr}(a: Uint384_expand, exp: Uint384, p: Uint384_expand) -> (res: Uint384) {
+        alloc_locals;
+        let (is_exp_zero) = uint384_lib.eq(exp, Uint384(0, 0, 0));
 
+        if (is_exp_zero == 1) {
+            return (Uint384(1, 0, 0),);
+        }
+
+        let (is_exp_one) = uint384_lib.eq(exp, Uint384(1, 0, 0));
+        if (is_exp_one == 1) {
+	    let aa = Uint384(a.b01,a.b23,a.b45);
+            // If exp = 1, it is possible that `a` is not reduced mod p,
+            // so we check and reduce if necessary
+	    let (is_a_lt_p) = uint384_lib.lt(aa, Uint384(p.b01,p.b23,p.b45));
+            if (is_a_lt_p == 1) {
+                return (aa,);
+            } else {
+                let (quotient, remainder) = uint384_lib.unsigned_div_rem_expanded(aa, p);
+                return (remainder,);
+            }
+        }
+
+        let (exp_div_2, rem) = uint384_lib.unsigned_div_rem2(exp);
+        //let (is_remainder_zero) = uint384_lib.eq(remainder, Uint384(0, 0, 0));
+
+        if (rem == 0) {
+            // NOTE: Code is repeated in the if-else to avoid declaring res as a local variable
+            let (res) = pow_expanded(a, exp_div_2, p);
+	    let (res_sq) = square(res, p);
+            return (res_sq,);
+        } else {
+            let (res) = pow_expanded(a, exp_div_2, p);
+	    let (res_sq) = square(res, p);
+            let (res_mul) = mul_expanded(res_sq, a, p);
+            return (res_mul,);
+        }
+    }
+
+    func pow_b{range_check_ptr}(a: Uint384, exp: Uint384, p: Uint384_expand) -> (res: Uint384) {
+        let (a_exp) = uint384_lib.expand(a);
+        return pow_expanded(a_exp,exp,p);
+    }
+    
     // WARNING: Will be deprecated
     // Checks if x is a square in F_q, i.e. x ≅ y**2 (mod q) for some y
     // `p_minus_one_div_2` is (p-1)/2. It is passed as an argument rather than computed, since for most applications
@@ -317,14 +371,14 @@ namespace field_arithmetic {
         // Verify that the values computed in the hint are what they are supposed to be
         let (gx: Uint384) = mul(generator, x, p);
         if (success_x == 1) {
-            let (sqrt_x_squared: Uint384) = mul(sqrt_x, sqrt_x, p);
+            let (sqrt_x_squared: Uint384) = square(sqrt_x, p);
             // Note these checks may fail if the input x does not satisfy 0<= x < p
             // TODO: Create a equality function within field_arithmetic to avoid overflow bugs
             let (check_x) = uint384_lib.eq(x, sqrt_x_squared);
             assert check_x = 1;
         } else {
             // In this case success_gx = 1
-            let (sqrt_gx_squared: Uint384) = mul(sqrt_gx, sqrt_gx, p);
+            let (sqrt_gx_squared: Uint384) = square(sqrt_gx, p);
             let (check_gx) = uint384_lib.eq(gx, sqrt_gx_squared);
             assert check_gx = 1;
         }

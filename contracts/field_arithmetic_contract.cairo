@@ -36,6 +36,21 @@ func field_arithmetic_mul{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_
     return (res,);
 }
 
+@view
+func uint384_expand{range_check_ptr}(a: Uint384) -> (e: Uint384_expand) {
+    let (e: Uint384_expand) = uint384_lib.expand(a);
+    return (e=e);
+}
+
+
+@view
+func field_arithmetic_mul_expanded{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    a: Uint384, b: Uint384_expand, p: Uint384_expand
+) -> (res: Uint384) {
+    let (res: Uint384) = field_arithmetic.mul_expanded(a, b, p);
+    return (res,);
+}
+
 // Computes a ** 2 modulo p
 @view
 func field_arithmetic_square{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
@@ -68,6 +83,15 @@ func field_arithmetic_pow{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_
     a: Uint384, exp: Uint384, p: Uint384_expand
 ) -> (res: Uint384) {
     let (res: Uint384) = field_arithmetic.pow(a, exp, p);
+    return (res,);
+}
+
+// Computes (a**exp) % p
+@view
+func field_arithmetic_pow_b{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    a: Uint384, exp: Uint384, p: Uint384_expand
+) -> (res: Uint384) {
+    let (res: Uint384) = field_arithmetic.pow_b(a, exp, p);
     return (res,);
 }
 

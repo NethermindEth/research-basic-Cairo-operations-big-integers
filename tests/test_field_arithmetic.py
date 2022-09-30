@@ -149,7 +149,7 @@ async def test_field_arithmetic_pow(x, exp, field_arithmetic_contract):
     exp_split = split(exp, num_bits_shift=128, length=3)
     p_split = split2(p, num_bits_shift=64, length=7)
 
-    execution_info = await field_arithmetic_contract.field_arithmetic_pow(
+    execution_info = await field_arithmetic_contract.field_arithmetic_pow_b(
         x_split, exp_split, p_split
     ).call()
     result_split = execution_info.result
@@ -160,7 +160,7 @@ async def test_field_arithmetic_pow(x, exp, field_arithmetic_contract):
 
 p_minus_one_div_2 = 2001204777610833696708894912867952078278441409969503942666029068062015825245418932221343814564507832018947136279893
 
-
+"""
 @given(
     x=st.integers(min_value=1, max_value=p - 1),
 )
@@ -185,7 +185,7 @@ async def test_fq_is_square(field_arithmetic_contract, x):
         # Otherwise it is
         python_result = 1
     assert result == python_result
-
+"""
 
 @pytest.mark.asyncio
 async def test_fq_is_square_specific(field_arithmetic_contract):
