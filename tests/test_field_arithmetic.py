@@ -11,7 +11,7 @@ from sqrt_mod_p import get_square_root_mod_p
 
 
 # Tests all functions from field_arithmetic_contract
-"""
+
 @given(
     x=st.integers(min_value=1, max_value=2**384 - 1),
     y=st.integers(min_value=1, max_value=2**384 - 1),
@@ -108,6 +108,27 @@ async def test_field_arithmetic_square(x, field_arithmetic_contract):
 
 @given(
     x=st.integers(min_value=1, max_value=2**384 - 1),
+)
+@settings(deadline=None)
+@pytest.mark.asyncio
+async def test_field_arithmetic_cube(x, field_arithmetic_contract):
+
+    print(x)
+
+    x_split = split(x, num_bits_shift=128, length=3)
+    p_split = split2(p, num_bits_shift=64, length=7)
+
+    execution_info = await field_arithmetic_contract.field_arithmetic_cube(
+        x_split, p_split
+    ).call()
+    result_split = execution_info.result
+    result = pack(result_split[0], num_bits_shift=128)
+
+    assert result == (x * x * x) % p
+
+
+@given(
+    x=st.integers(min_value=1, max_value=2**384 - 1),
     y=st.integers(min_value=1, max_value=2**384 - 1),
 )
 @settings(deadline=None)
@@ -133,7 +154,7 @@ async def test_field_arithmetic_div(x, y, field_arithmetic_contract):
     # Instead we use the python3.7-friendly function div_mod from starkware.python.math_utils
     y_inverse = div_mod(1, y, p)
     assert result == (x * y_inverse) % p
-"""
+
 
 @given(
     x=st.integers(min_value=1, max_value=2**384 - 1),

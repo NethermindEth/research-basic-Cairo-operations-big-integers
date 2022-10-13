@@ -95,6 +95,40 @@ namespace field_arithmetic {
         return (remainder,);
     }
 
+    // Computes a**3 modulo p
+    func cube{range_check_ptr}(a: Uint384, p: Uint384_expand) -> (res: Uint384) {
+        alloc_locals;
+        let (a0, a1) = uint384_lib.split_64(a.d0);
+        let (a2, a3) = uint384_lib.split_64(a.d1);
+        let (a4, a5) = uint384_lib.split_64(a.d2);
+
+	const HALF_SHIFT2 = 2*HALF_SHIFT;
+	local A0 = a0*HALF_SHIFT2;
+	local ad0_2 = a.d0*2;
+	local a12 = a1 + a2*HALF_SHIFT;
+
+        let (res0, carry) = uint384_lib.split_128(a0*(ad0_2 - a0));
+        let (res2, carry) = uint384_lib.split_128(
+	    a2*ad0_2 + a1*a1 + a3*A0 + carry,
+        );
+        let (res4, carry) = uint384_lib.split_128(
+	    (a4*a.d0 + a3*a12)*2 + a2*a2 + a5*A0 + carry,
+        );
+        let (res6, carry) = uint384_lib.split_128(
+	    (a5*a12 + a4*a.d1)*2 + a3*a3 + carry,
+        );
+        let (res8, carry) = uint384_lib.split_128(
+	    a5*a3*2 + a4*(a4 + a5*HALF_SHIFT2) + carry
+        );
+        // let (res10, carry) = split_64(a5*a5 + carry)
+
+        let full_square = Uint768(res0, res2, res4, res6, res8, a5*a5 + carry);
+        let (_,rem) = uint384_extension_lib.unsigned_div_rem_uint768_by_uint384_expand(full_square, p);
+	let a_exp = Uint384_expand(a0*HALF_SHIFT,a.d0,a12,a.d1,a3 + a4*HALF_SHIFT,a.d2,a5);
+	return mul_expanded(rem,a_exp,p);
+    }
+
+
     // Computes a * b^{-1} modulo p
     // NOTE: The modular inverse of b modulo p is computed in a hint and verified outside the hind with a multiplicaiton
     func div{range_check_ptr}(a: Uint384, b: Uint384, p: Uint384_expand) -> (res: Uint384) {

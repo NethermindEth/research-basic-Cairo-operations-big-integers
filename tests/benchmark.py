@@ -344,6 +344,16 @@ async def test_benchmark_field_arithmetic(field_arithmetic_contract):
     "|",
     "%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter,
     )
+    
+    execution_info = await field_arithmetic_contract.field_arithmetic_cube(x_split, p_split).call()
+    
+    print(
+    "%20s" % "cube",
+    "|",
+    "%20s" % execution_info.call_info.execution_resources.n_steps,
+    "|",
+    "%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter,
+    )
 
     execution_info = await field_arithmetic_contract.field_arithmetic_div(x_split, y_split, p_split).call()
     

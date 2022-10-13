@@ -60,6 +60,15 @@ func field_arithmetic_square{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, ran
     return (res,);
 }
 
+// Computes a ** 3 modulo p
+@view
+func field_arithmetic_cube{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    a: Uint384, p: Uint384_expand
+) -> (res: Uint384) {
+    let (res: Uint384) = field_arithmetic.cube(a, p);
+    return (res,);
+}
+
 // Computes a * b^{-1} modulo p
 @view
 func field_arithmetic_div{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
