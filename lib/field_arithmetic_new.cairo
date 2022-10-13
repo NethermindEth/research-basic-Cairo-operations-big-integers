@@ -419,13 +419,11 @@ namespace field_arithmetic {
             let (sqrt_x_squared: Uint384) = square(sqrt_x, p);
             // Note these checks may fail if the input x does not satisfy 0<= x < p
             // TODO: Create a equality function within field_arithmetic to avoid overflow bugs
-            let (check_x) = uint384_lib.eq(x, sqrt_x_squared);
-            assert check_x = 1;
+	    assert x = sqrt_x_squared;
         } else {
             // In this case success_gx = 1
             let (sqrt_gx_squared: Uint384) = square(sqrt_gx, p);
-            let (check_gx) = uint384_lib.eq(gx, sqrt_gx_squared);
-            assert check_gx = 1;
+	    assert gx = sqrt_gx_squared;
         }
 
         // Return the appropriate values
