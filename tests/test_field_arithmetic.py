@@ -149,7 +149,7 @@ async def test_field_arithmetic_pow(x, exp, field_arithmetic_contract):
     exp_split = split(exp, num_bits_shift=128, length=3)
     p_split = split2(p, num_bits_shift=64, length=7)
 
-    execution_info = await field_arithmetic_contract.field_arithmetic_pow_b(
+    execution_info = await field_arithmetic_contract.field_arithmetic_pow_c(
         x_split, exp_split, p_split
     ).call()
     result_split = execution_info.result

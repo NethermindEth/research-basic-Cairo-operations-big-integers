@@ -95,6 +95,15 @@ func field_arithmetic_pow_b{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, rang
     return (res,);
 }
 
+// Computes (a**exp) % p
+@view
+func field_arithmetic_pow_c{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    a: Uint384, exp: Uint384, p: Uint384_expand
+) -> (res: Uint384) {
+    let (res: Uint384) = field_arithmetic.pow_c(a, exp, p);
+    return (res,);
+}
+
 // DEPRECATED
 @view
 func is_square_non_optimized{

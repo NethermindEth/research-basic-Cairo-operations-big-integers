@@ -385,6 +385,16 @@ async def test_benchmark_field_arithmetic(field_arithmetic_contract):
     "%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter,
     )
 
+    execution_info = await field_arithmetic_contract.field_arithmetic_pow_c(x_split, y_split, p_split).call()
+    
+    print(
+    "%20s" % "pow c",
+    "|",
+    "%20s" % execution_info.call_info.execution_resources.n_steps,
+    "|",
+    "%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter,
+    )
+
     execution_info = await field_arithmetic_contract.is_square_non_optimized(x_split, p_split, split((p-1)//2)).call()
     
     print(

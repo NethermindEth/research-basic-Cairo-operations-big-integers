@@ -5,7 +5,7 @@ from starkware.cairo.common.math_cmp import is_le
 from starkware.cairo.common.pow import pow
 from starkware.cairo.common.registers import get_ap, get_fp_and_pc
 // Import uint384 files (path may change in the future)
-from lib.uint384 import uint384_lib, Uint384, Uint384_expand
+from lib.uint384 import uint384_lib, Uint384, Uint384_expand, SHIFT, HALF_SHIFT
 from lib.uint384_extension import uint384_extension_lib, Uint768
 
 // Functions for operating elements in a finite field F_p (i.e. modulo a prime p), with p of at most 384 bits
@@ -270,7 +270,52 @@ namespace field_arithmetic {
         let (a_exp) = uint384_lib.expand(a);
         return pow_expanded(a_exp,exp,p);
     }
-    
+
+    func _pow_loop{range_check_ptr}(a: Uint384_expand, val: Uint384, exp: felt, p: Uint384_expand, n: felt) -> (res: Uint384) {
+        alloc_locals;
+        if (n==0) {
+	  return (val,);
+        }
+
+        local carry: felt;
+        %{
+            exp2 = ids.exp*2
+            ids.carry = 1 if exp2 >= ids.SHIFT else 0
+        %}
+        // Either 0 or 1
+        assert carry * carry = carry;
+        local e2 = exp*2 - carry * SHIFT;
+        [range_check_ptr] = e2;
+        let range_check_ptr = range_check_ptr + 1;
+	
+      
+        let (val_sq) = square(val, p);
+        local not_carry = 1 - carry;
+        let a_cond=Uint384_expand(carry*a.B0 + not_carry*HALF_SHIFT, carry*a.b01 + not_carry,
+				  carry*a.b12,carry*a.b23,carry*a.b34,carry*a.b45,carry*a.b5);
+        let (v) = mul_expanded(val_sq, a_cond, p);
+
+	return _pow_loop(a=a,val=v,exp=e2,p=p,n=n-1);
+    }
+
+    // Computes (a**exp) % p. Uses the fast exponentiation algorithm, so it takes at most 384 squarings
+    // uses no conditionals in inputs
+    func pow_expanded_no_cond{range_check_ptr}(a: Uint384_expand, exp: Uint384, p: Uint384_expand) -> (res: Uint384) {
+
+      let val = Uint384(1,0,0);
+      
+      let (val)=_pow_loop(a=a,val=val,exp=exp.d2,p=p,n=128);
+      let (val)=_pow_loop(a=a,val=val,exp=exp.d1,p=p,n=128);
+      let (val)=_pow_loop(a=a,val=val,exp=exp.d0,p=p,n=128);
+
+      return (val,);
+    }
+
+    func pow_c{range_check_ptr}(a: Uint384, exp: Uint384, p: Uint384_expand) -> (res: Uint384) {
+        let (a_exp) = uint384_lib.expand(a);
+        return pow_expanded_no_cond(a_exp,exp,p);
+    }
+
     // WARNING: Will be deprecated
     // Checks if x is a square in F_q, i.e. x ≅ y**2 (mod q) for some y
     // `p_minus_one_div_2` is (p-1)/2. It is passed as an argument rather than computed, since for most applications
