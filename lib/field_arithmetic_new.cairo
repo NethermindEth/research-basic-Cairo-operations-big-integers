@@ -320,7 +320,7 @@ namespace field_arithmetic {
     // Checks if x is a square in F_q, i.e. x ≅ y**2 (mod q) for some y
     // `p_minus_one_div_2` is (p-1)/2. It is passed as an argument rather than computed, since for most applications
     // p (and thus (p-1)/2) will be hardcoded and this library wrapped around with p fixed to the hardcoded value
-    func is_square_non_optimized{range_check_ptr, bitwise_ptr: BitwiseBuiltin*}(
+    func is_square_non_optimized{range_check_ptr}(
         x: Uint384, p: Uint384_expand, p_minus_one_div_2: Uint384
     ) -> (bool: felt) {
         alloc_locals;
@@ -346,7 +346,7 @@ namespace field_arithmetic {
     // 2. If (and only if not), then gx *is* a square (for g a generator of F_p^*), so find a square root r of it
     // 3. Check in Cairo that r**2 = x (mod p) or r**2 = gx (mod p), respectively
     // NOTE: The function assumes that 0 <= x < p
-    func get_square_root{range_check_ptr, bitwise_ptr: BitwiseBuiltin*}(
+    func get_square_root{range_check_ptr}(
         x: Uint384, p: Uint384_expand, generator: Uint384
     ) -> (success: felt, res: Uint384) {
         alloc_locals;
@@ -439,13 +439,13 @@ namespace field_arithmetic {
     // TODO: not tested
     // TODO: We should create a struct `FQ` to represent Uint384's reduced modulo p
     // RIght now thid function expects a and be to be between 0 and p-1
-    func eq{range_check_ptr}(a: Uint384, b: Uint384) -> (res: felt) {
+    func eq(a: Uint384, b: Uint384) -> (res: felt) {
         let (is_a_eq_b) = uint384_lib.eq(a, b);
         return (is_a_eq_b,);
     }
 
     // TODO: not tested
-    func is_zero{range_check_ptr}(a: Uint384) -> (bool: felt) {
+    func is_zero(a: Uint384) -> (bool: felt) {
         let (is_a_zero) = uint384_lib.is_zero(a);
         if (is_a_zero == 1) {
             return (1,);

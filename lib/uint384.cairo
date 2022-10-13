@@ -963,7 +963,7 @@ namespace uint384_lib {
     }
 
     // Returns the bitwise NOT of an integer.
-    func not{range_check_ptr}(a: Uint384) -> (res: Uint384) {
+    func not(a: Uint384) -> (res: Uint384) {
         return (Uint384(d0=ALL_ONES - a.d0, d1=ALL_ONES - a.d1, d2=ALL_ONES - a.d2),);
     }
 
@@ -1038,7 +1038,7 @@ namespace uint384_lib {
     }
 
     // Return true if both integers are equal.
-    func eq{range_check_ptr}(a: Uint384, b: Uint384) -> (res: felt) {
+    func eq(a: Uint384, b: Uint384) -> (res: felt) {
         if (a.d2 != b.d2) {
             return (0,);
         }
@@ -1052,7 +1052,7 @@ namespace uint384_lib {
     }
 
     // Return true if a = 0
-    func is_zero{range_check_ptr}(a: Uint384) -> (res: felt) {
+    func is_zero(a: Uint384) -> (res: felt) {
         let (is_a_zero) = eq(a, Uint384(0, 0, 0));
         if (is_a_zero == 1) {
             return (1,);
@@ -1062,7 +1062,7 @@ namespace uint384_lib {
     }
 
     // Computes the bitwise XOR of 2 uint256 integers.
-    func xor{range_check_ptr, bitwise_ptr: BitwiseBuiltin*}(a: Uint384, b: Uint384) -> (
+    func xor{bitwise_ptr: BitwiseBuiltin*}(a: Uint384, b: Uint384) -> (
         res: Uint384
     ) {
         let (d0) = bitwise_xor(a.d0, b.d0);
@@ -1073,7 +1073,7 @@ namespace uint384_lib {
 
     // Computes the bitwise AND of 2 uint384 integers.
     // NOTE: `and` will be a reserved word in future Cairo versions, so we cannot call this function `and`
-    func bit_and{range_check_ptr, bitwise_ptr: BitwiseBuiltin*}(a: Uint384, b: Uint384) -> (
+    func bit_and{bitwise_ptr: BitwiseBuiltin*}(a: Uint384, b: Uint384) -> (
         res: Uint384
     ) {
         let (d0) = bitwise_and(a.d0, b.d0);
@@ -1083,7 +1083,7 @@ namespace uint384_lib {
     }
 
     // Computes the bitwise OR of 2 uint384 integers.
-    func or{range_check_ptr, bitwise_ptr: BitwiseBuiltin*}(a: Uint384, b: Uint384) -> (
+    func or{bitwise_ptr: BitwiseBuiltin*}(a: Uint384, b: Uint384) -> (
         res: Uint384
     ) {
         let (d0) = bitwise_or(a.d0, b.d0);
