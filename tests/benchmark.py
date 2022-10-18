@@ -244,6 +244,16 @@ async def test_benchmark_uin384(uint384_contract):
     "%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter,
     )
 
+    execution_info = await uint384_contract.uint384_sqrt_b(x_split).call()
+    
+    print(
+    "%20s" % "sqrt b",
+    "|",
+    "%20s" % execution_info.call_info.execution_resources.n_steps,
+    "|",
+    "%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter,
+    )
+
     execution_info = await uint384_contract.uint384_reverse_endian(x_split).call()
     print("%20s" % "reverse endian","|","%20s" % execution_info.call_info.execution_resources.n_steps,"|","%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter,)
 

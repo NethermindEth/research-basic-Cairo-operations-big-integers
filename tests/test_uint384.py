@@ -240,7 +240,7 @@ async def test_sqrt(a, uint384_contract):
     print(a)
     a_split = split(a, num_bits_shift=128, length=3)
 
-    execution_info = await uint384_contract.uint384_sqrt(a_split).call()
+    execution_info = await uint384_contract.uint384_sqrt_b(a_split).call()
     result_split = execution_info.result
     result = pack(result_split[0], num_bits_shift=128)
     assert result == isqrt(a)

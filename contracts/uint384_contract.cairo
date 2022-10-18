@@ -100,6 +100,12 @@ func uint384_sqrt{range_check_ptr}(a: Uint384) -> (res: Uint384) {
     return (res,);
 }
 
+@view
+func uint384_sqrt_b{range_check_ptr}(a: Uint384) -> (res: Uint384) {
+    let (res) = uint384_lib.sqrt_b(a);
+    return (res,);
+}
+
 // Returns 1 if the first unsigned integer is less than the second signed integer
 @view
 func uint384_lt{range_check_ptr}(a: Uint384, b: Uint384) -> (res: felt) {

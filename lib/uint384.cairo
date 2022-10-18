@@ -3,7 +3,7 @@ from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
 from starkware.cairo.common.math import assert_in_range, assert_le, assert_nn_le, assert_not_zero
 from starkware.cairo.common.math import unsigned_div_rem as frem
 from starkware.cairo.common.math_cmp import is_le
-// from starkware.cairo.common.uint256 import word_reverse_endian
+from starkware.cairo.common.uint256 import Uint256, uint256_add //, uint256_square, word_reverse_endian
 from starkware.cairo.common.pow import pow
 from starkware.cairo.common.registers import get_ap, get_fp_and_pc
 
@@ -36,6 +36,28 @@ struct Uint384_expand {
 const SHIFT = 2 ** 128;
 const ALL_ONES = 2 ** 128 - 1;
 const HALF_SHIFT = 2 ** 64;
+
+//until this gets incorporated into common.uint256, we're placing this here
+func uint256_square{range_check_ptr}(a: Uint256) -> (low: Uint256, high: Uint256) {
+    alloc_locals;
+    let (a0, a1) = uint384_lib.split_64(a.low);
+    let (a2, a3) = uint384_lib.split_64(a.high);
+
+    const HALF_SHIFT2 = 2*HALF_SHIFT;
+
+    local a12=a1 + a2*HALF_SHIFT2;
+
+    let (res0, carry) = uint384_lib.split_128(a0*(a0 + a1*HALF_SHIFT2));
+    let (res2, carry) = uint384_lib.split_128(
+       a0*a.high*2 + a1*a12 + carry,
+    );
+    let (res4, carry) = uint384_lib.split_128(
+       a3*(a1 + a12) + a2*a2 + carry
+    );
+    // let (res6, carry) = split_64(a3*a3 + carry);
+
+    return (low=Uint256(low=res0, high=res2), high=Uint256(low=res4, high=a3*a3 + carry),);
+}
 
 namespace uint384_lib {
     // Verifies that the given integer is valid.
@@ -729,10 +751,10 @@ namespace uint384_lib {
         assert root.d2 = 0;
         [range_check_ptr] = root.d0;
 
-        // Check that 0 <= d1 < 2**64, equivalent to checking 0<= d1*2**64 < 2**128
+        // We don't need to check that 0 <= d1 < 2**64, since this gets checked
+	// when we check that carry==0 later
         assert [range_check_ptr + 1] = root.d1;
-        assert [range_check_ptr + 2] = HALF_SHIFT - 1 - root.d1;
-        let range_check_ptr = range_check_ptr + 3;
+        let range_check_ptr = range_check_ptr + 2;
 
         // Verify that n >= root**2.
         let (root_squared, carry) = square_e(root);
@@ -751,6 +773,61 @@ namespace uint384_lib {
         assert check_upper_bound = 1;
 
         return (res=root);
+    }
+
+    // Returns the floor value of the square root of a Uint384 integer.
+    func sqrt_b{range_check_ptr}(a: Uint384) -> (res: Uint384) {
+        alloc_locals;
+        //let (__fp__, _) = get_fp_and_pc();
+        local root: Uint256;
+
+        %{
+            from starkware.python.math_utils import isqrt
+
+            def split(num: int, num_bits_shift: int, length: int):
+                a = []
+                for _ in range(length):
+                    a.append( num & ((1 << num_bits_shift) - 1) )
+                    num = num >> num_bits_shift
+                return tuple(a)
+
+            def pack(z, num_bits_shift: int) -> int:
+                limbs = (z.d0, z.d1, z.d2)
+                return sum(limb << (num_bits_shift * i) for i, limb in enumerate(limbs))
+
+            a = pack(ids.a, num_bits_shift=128)
+            root = isqrt(a)
+            assert 0 <= root < 2 ** 192
+            root_split = split(root, num_bits_shift=128, length=2)
+            ids.root.low = root_split[0]
+            ids.root.high = root_split[1]
+        %}
+
+        // Verify that 0 <= root < 2**192.
+        [range_check_ptr] = root.low;
+
+        // We don't need to check that 0 <= d1 < 2**64, since this gets checked
+	// when we check that root_squared_h.high==0 later
+        assert [range_check_ptr + 1] = root.high;
+        let range_check_ptr = range_check_ptr + 2;
+
+        // Verify that n >= root**2.
+        let (root_squared_l, root_squared_h) = uint256_square(root);
+        assert root_squared_h.high = 0;
+	let root_squared = Uint384(root_squared_l.low, root_squared_l.high, root_squared_h.low);
+        let (check_lower_bound) = le(root_squared, a);
+        assert check_lower_bound = 1;
+
+        // Verify that n <= (root+1)**2 - 1.
+	// Note that (root+1)**2 - 1 = root**2 + 2*root.
+        // In the case where root = 2**192 - 1, since
+        // (root+1)**2 = 2**384, next_root_squared - 1 = 2**384 - 1, as desired.
+	let (twice_root,carry) = uint256_add(root, root);
+	let (next_root_squared_minus_one,_) = add(root_squared,Uint384(twice_root.low,twice_root.high,carry));
+        let (check_upper_bound) = le(a, next_root_squared_minus_one);
+        assert check_upper_bound = 1;
+
+        return (res=Uint384(root.low,root.high,0));
     }
 
     // Returns 1 if the first unsigned integer is less than the second unsigned integer.
