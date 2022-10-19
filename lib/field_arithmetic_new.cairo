@@ -305,7 +305,7 @@ namespace field_arithmetic {
         return pow_expanded(a_exp,exp,p);
     }
 
-    func _pow_loop{range_check_ptr}(a: Uint384_expand, val: Uint384, exp: felt, p: Uint384_expand, n: felt) -> (res: Uint384) {
+    func _pow_loop{range_check_ptr}(a: Uint384_expand, val: Uint384, exp: felt, p: Uint384_expand, n) -> (res: Uint384) {
         alloc_locals;
         if (n==0) {
 	  return (val,);
