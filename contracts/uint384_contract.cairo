@@ -176,11 +176,30 @@ func uint384_signed_div_rem{range_check_ptr}(a: Uint384, div: Uint384) -> (
     return (quot, rem);
 }
 
+// Negates an integer. Returns the result as a 384-bit integer.
+@view
+func uint384_neg{range_check_ptr}(a: Uint384) -> (res: Uint384) {
+    let (res: Uint384) = uint384_lib.neg(a);
+    return (res,);
+}
+
+@view
+func uint384_neg_b{range_check_ptr}(a: Uint384) -> (res: Uint384) {
+    let (res: Uint384) = uint384_lib.neg_b(a);
+    return (res,);
+}
+
 // Subtracts one integer from another. Returns the result as a 384-bit integer.
 @view
 func uint384_sub{range_check_ptr}(a: Uint384, b: Uint384) -> (res: Uint384) {
     let (res: Uint384) = uint384_lib.sub(a, b);
     return (res,);
+}
+
+@view
+func uint384_sub_b{range_check_ptr}(a: Uint384, b: Uint384) -> (res: Uint384,sign: felt) {
+    let (res: Uint384, sign: felt) = uint384_lib.sub_b(a, b);
+    return (res,sign);
 }
 
 // Subtracts one integer from another. Returns the result as a felt (0 false, 1 true).

@@ -1052,6 +1052,11 @@ namespace uint384_lib {
         return (res,);
     }
 
+    func neg_b{range_check_ptr}(a: Uint384) -> (res: Uint384) {
+        let (res, _) = sub_b(Uint384(d0=0, d1=0, d2=0),a);
+        return (res,);
+    }
+
     // Conditionally negates an integer.
     func cond_neg{range_check_ptr}(a: Uint384, should_neg) -> (res: Uint384) {
         if (should_neg != 0) {
@@ -1112,6 +1117,36 @@ namespace uint384_lib {
         let (b_neg) = neg(b);
         let (res, _) = add(a, b_neg);
         return (res,);
+    }
+
+    // Subtracts two integers. Returns the result as a 384-bit integer
+    // and a sign felt that is 1 if the result is non-negative, convention based on signed_nn
+    func sub_b{range_check_ptr}(a: Uint384, b: Uint384) -> (res: Uint384, sign: felt) {
+        alloc_locals;
+        local res : Uint384;
+	%{
+            def split(num: int, num_bits_shift: int = 128, length: int = 3):
+                a = []
+                for _ in range(length):
+                    a.append( num & ((1 << num_bits_shift) - 1) )
+                    num = num >> num_bits_shift
+                return tuple(a)
+
+            def pack(z, num_bits_shift: int = 128) -> int:
+                limbs = (z.d0, z.d1, z.d2)
+                return sum(limb << (num_bits_shift * i) for i, limb in enumerate(limbs))
+
+            a = pack(ids.a)
+            b = pack(ids.b)
+            res = (a - b)%2**384
+            res_split = split(res)
+            ids.res.d0 = res_split[0]
+            ids.res.d1 = res_split[1]
+            ids.res.d2 = res_split[2]
+	%}
+	let (aa, inv_sign) = add(res,b);
+	assert aa = a;
+        return (res, 1-inv_sign);
     }
 
     // Return true if both integers are equal.

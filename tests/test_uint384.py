@@ -55,16 +55,19 @@ async def test_sub(x, y, uint384_contract):
     x_split = split(x, num_bits_shift=128, length=3)
     y_split = split(y, num_bits_shift=128, length=3)
 
-    execution_info = await uint384_contract.uint384_sub(x_split, y_split).call()
+    execution_info = await uint384_contract.uint384_sub_b(x_split, y_split).call()
     result_no_carry = execution_info.result[0]
+    sign = execution_info.result[1]
     result = pack(result_no_carry, num_bits_shift=128)
 
     if y > x:
         temp = result - 2**384
         print(temp)
         assert temp == x - y
+        assert sign == 0
     else:
         assert result == x - y
+        assert sign == 1
 
 
 @given(
