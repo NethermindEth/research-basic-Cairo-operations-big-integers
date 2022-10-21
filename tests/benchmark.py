@@ -307,6 +307,10 @@ async def test_benchmark_uin384(uint384_contract):
     
     print("%20s" % "signed nn","|","%20s" % execution_info.call_info.execution_resources.n_steps,"|","%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter)
 
+    execution_info = await uint384_contract.uint384_hiding_signed_nn(x_split).call()
+    
+    print("%20s" % "hiding signed nn","|","%20s" % execution_info.call_info.execution_resources.n_steps,"|","%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter)
+
     execution_info = await uint384_contract.uint384_signed_nn_le(x_split, y_split).call()
     print("%20s" % "signed nn_le","|","%20s" % execution_info.call_info.execution_resources.n_steps,"|","%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter)
 

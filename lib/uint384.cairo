@@ -8,6 +8,7 @@ from starkware.cairo.common.pow import pow
 from starkware.cairo.common.registers import get_ap, get_fp_and_pc
 
 from lib.fft import fft_lib
+from lib.uint256_improvements import uint256_square
 
 // This library is adapted from Cairo's common library Uint256 and it follows it as closely as possible.
 // The library implements basic operations between 384-bit integers.
@@ -36,28 +37,6 @@ struct Uint384_expand {
 const SHIFT = 2 ** 128;
 const ALL_ONES = 2 ** 128 - 1;
 const HALF_SHIFT = 2 ** 64;
-
-//until this gets incorporated into common.uint256, we're placing this here
-func uint256_square{range_check_ptr}(a: Uint256) -> (low: Uint256, high: Uint256) {
-    alloc_locals;
-    let (a0, a1) = uint384_lib.split_64(a.low);
-    let (a2, a3) = uint384_lib.split_64(a.high);
-
-    const HALF_SHIFT2 = 2*HALF_SHIFT;
-
-    local a12=a1 + a2*HALF_SHIFT2;
-
-    let (res0, carry) = uint384_lib.split_128(a0*(a0 + a1*HALF_SHIFT2));
-    let (res2, carry) = uint384_lib.split_128(
-       a0*a.high*2 + a1*a12 + carry,
-    );
-    let (res4, carry) = uint384_lib.split_128(
-       a3*(a1 + a12) + a2*a2 + carry
-    );
-    // let (res6, carry) = split_64(a3*a3 + carry);
-
-    return (low=Uint256(low=res0, high=res2), high=Uint256(low=res4, high=a3*a3 + carry),);
-}
 
 namespace uint384_lib {
     // Verifies that the given integer is valid.
@@ -877,6 +856,22 @@ namespace uint384_lib {
         return (res=1);
     }
 
+    // hiding version of signed_nn
+    // also avoids using `@known_ap_change`
+    func hiding_signed_nn{range_check_ptr}(a: Uint384) -> (res: felt) {
+        alloc_locals;
+        local inv_res: felt;
+        %{
+           ids.inv_res = 1 if ids.a.d2*2 >= ids.SHIFT else 0
+        %}
+	// Either 0 or 1
+	assert inv_res * inv_res = inv_res;
+	assert [range_check_ptr] = a.d2*2 - inv_res*SHIFT;
+	let range_check_ptr = range_check_ptr + 1;
+	
+	return (res=1 - inv_res);
+    }
+
     // Returns 1 if the first signed integer is less than or equal to the second signed integer
     // and is greater than or equal to zero.
     func signed_nn_le{range_check_ptr}(a: Uint384, b: Uint384) -> (res: felt) {
@@ -1144,6 +1139,7 @@ namespace uint384_lib {
             ids.res.d1 = res_split[1]
             ids.res.d2 = res_split[2]
 	%}
+	check(res);
 	let (aa, inv_sign) = add(res,b);
 	assert aa = a;
         return (res, 1-inv_sign);

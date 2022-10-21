@@ -141,6 +141,12 @@ func uint384_signed_nn{range_check_ptr}(a: Uint384) -> (res: felt) {
     return (res,);
 }
 
+@view
+func uint384_hiding_signed_nn{range_check_ptr}(a: Uint384) -> (res: felt) {
+    let (res) = uint384_lib.hiding_signed_nn(a);
+    return (res,);
+}
+
 // Returns 1 if the first signed integer is less than or equal to the second signed integer
 // and is greater than or equal to zero.
 @view
