@@ -169,7 +169,6 @@ namespace uint384_lib {
     // Multiplies two integers. Returns the result as two 384-bit integers: the result has 2*384 bits,
     // the returned integers represent the lower 384-bits and the higher 384-bits, respectively.
     func mul{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, high: Uint384) {
-        alloc_locals;
         let (a0, a1) = split_64(a.d0);
         let (a2, a3) = split_64(a.d1);
         let (a4, a5) = split_64(a.d2);
@@ -210,7 +209,6 @@ namespace uint384_lib {
     // end
 
     func mul_b{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, high: Uint384) {
-        alloc_locals;
         let a0 = a.d0;
         let a2 = a.d1;
         let a4 = a.d2;
@@ -309,7 +307,6 @@ namespace uint384_lib {
     }
     
     func mul_expanded{range_check_ptr}(a: Uint384, b: Uint384_expand) -> (low: Uint384, high: Uint384) {
-        alloc_locals;
         let (a0, a1) = split_64(a.d0);
         let (a2, a3) = split_64(a.d1);
         let (a4, a5) = split_64(a.d2);
@@ -372,7 +369,6 @@ namespace uint384_lib {
     }
 
     func mul_Toom3{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, high: Uint384) {
-        alloc_locals;
         let (a0, a1) = split_64(a.d0);
         let (a2, a3) = split_64(a.d1);
         let (a4, a5) = split_64(a.d2);
@@ -565,7 +561,6 @@ namespace uint384_lib {
     }
 
     func mul_s{range_check_ptr}(a: Uint384, b: Uint384) -> (low: Uint384, high: Uint384) {
-        alloc_locals;
         let (a0, a1) = split_64(a.d0);
         let (a2, a3) = split_64(a.d1);
         let (a4, a5) = split_64(a.d2);
@@ -605,7 +600,6 @@ namespace uint384_lib {
     }
     
     func square_c{range_check_ptr}(a: Uint384) -> (low: Uint384, high: Uint384) {
-        alloc_locals;
         let (a0, a1) = split_64(a.d0);
         let (a2, a3) = split_64(a.d1);
         let (a4, a5) = split_64(a.d2);

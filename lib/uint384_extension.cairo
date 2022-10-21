@@ -94,7 +94,6 @@ namespace uint384_extension_lib {
     func mul_uint768_by_uint384_c{range_check_ptr}(a: Uint768, b: Uint384) -> (
         low: Uint768, high: Uint384
     ) {
-        alloc_locals;
         let (a0, a1) = uint384_lib.split_64(a.d0);
         let (a2, a3) = uint384_lib.split_64(a.d1);
         let (a4, a5) = uint384_lib.split_64(a.d2);
@@ -190,7 +189,6 @@ namespace uint384_extension_lib {
     func mul_uint768_by_uint384_expanded{range_check_ptr}(a: Uint768, b: Uint384_expand) -> (
         low: Uint768, high: Uint384
     ) {
-        alloc_locals;
         let (a0, a1) = uint384_lib.split_64(a.d0);
         let (a2, a3) = uint384_lib.split_64(a.d1);
         let (a4, a5) = uint384_lib.split_64(a.d2);
