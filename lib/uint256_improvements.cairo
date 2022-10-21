@@ -211,3 +211,69 @@ func uint128_square{range_check_ptr}(a: felt) -> (result: Uint256) {
 
     return (result=Uint256(low=res0, high=a1 * a1 + carry));
 }
+
+//a series of overlapping 128-bit sections of a Uint256.
+//for use in uint128_mul_expanded and uint128_unsigned_div_rem_expanded
+struct Uint256_expand {
+    B0: felt,
+    b01: felt,
+    b12: felt,
+    b23: felt,
+    b3: felt,
+}
+
+//expands a Uint256 into a Uint256_expand
+func uint256_expand{range_check_ptr}(a: Uint256) -> (exp: Uint256_expand) {
+    let (a0, a1) = split_64(a.low);
+    let (a2, a3) = split_64(a.high);
+      
+    return(exp=Uint256_expand(a0*HALF_SHIFT,a.low,a1 + a2*HALF_SHIFT,a.high,a3));
+}
+
+func uint256_mul_expanded{range_check_ptr}(a: Uint256, b: Uint256_expand) -> (low: Uint256, high: Uint256) {
+    let (a0, a1) = split_64(a.low);
+    let (a2, a3) = split_64(a.high);
+
+    let (res0, carry) = split_128(a1 * b.B0 + a0 * b.b01);
+    let (res2, carry) = split_128(
+	a3 * b.B0 + a2 * b.b01 + a1 * b.b12 + a0 * b.b23 + carry,
+    );
+    let (res4, carry) = split_128(
+        a3 * b.b12 + a2 * b.b23 + a1 * b.b3 + carry
+    );
+    // let (res6, carry) = split_64(a3 * b.b3 + carry);
+
+    return (low=Uint256(low=res0, high=res2), high=Uint256(low=res4, high=a3 * b.b3 + carry),);
+}
+
+func uint256_unsigned_div_rem_expanded{range_check_ptr}(a: Uint256, div: Uint256_expand) -> (
+    quotient: Uint256, remainder: Uint256
+) {
+    alloc_locals;
+
+    // Guess the quotient and the remainder.
+    local quotient: Uint256;
+    local remainder: Uint256;
+    %{
+        a = (ids.a.high << 128) + ids.a.low
+        div = (ids.div.b23 << 128) + ids.div.b01
+        quotient, remainder = divmod(a, div)
+
+        ids.quotient.low = quotient & ((1 << 128) - 1)
+        ids.quotient.high = quotient >> 128
+        ids.remainder.low = remainder & ((1 << 128) - 1)
+        ids.remainder.high = remainder >> 128
+    %}
+    uint256_check(quotient);
+    uint256_check(remainder);
+    let (res_mul, carry) = uint256_mul_expanded(quotient, div);
+    assert carry = Uint256(0, 0);
+
+    let (check_val, add_carry) = uint256_add(res_mul, remainder);
+    assert check_val = a;
+    assert add_carry = 0;
+
+    let (is_valid) = uint256_lt(remainder, Uint256(div.b01,div.b23));
+    assert is_valid = 1;
+    return (quotient=quotient, remainder=remainder);
+}

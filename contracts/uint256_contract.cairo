@@ -15,6 +15,10 @@ from lib.uint256_improvements import(
     uint256_sub as uint256_sub_new,
     uint256_unsigned_div_rem as uint256_unsigned_div_rem_new,
     uint256_sqrt as uint256_sqrt_new,
+    Uint256_expand,
+    uint256_expand,
+    uint256_mul_expanded,
+    uint256_unsigned_div_rem_expanded
 )
 
 @view
@@ -74,5 +78,25 @@ func uint256_unsigned_div_rem_new_c{range_check_ptr}(a: Uint256, div: Uint256) -
     quotient: Uint256, remainder: Uint256
 ) {
     let (quotient: Uint256, remainder: Uint256) = uint256_unsigned_div_rem_new(a, div);
+    return (quotient, remainder);
+}
+
+@view
+func uint256_expand_c{range_check_ptr}(a: Uint256) -> (e: Uint256_expand) {
+    let (e: Uint256_expand) = uint256_expand(a);
+    return (e=e);
+}
+
+@view
+func uint256_mul_expanded_c{range_check_ptr}(a: Uint256, b: Uint256_expand) -> (low: Uint256, high: Uint256) {
+    let (low: Uint256, high: Uint256) = uint256_mul_expanded(a, b);
+    return (low, high);
+}
+
+@view
+func uint256_unsigned_div_rem_expanded_c{range_check_ptr}(a: Uint256, div: Uint256_expand) -> (
+    quotient: Uint256, remainder: Uint256
+) {
+    let (quotient: Uint256, remainder: Uint256) = uint256_unsigned_div_rem_expanded(a, div);
     return (quotient, remainder);
 }

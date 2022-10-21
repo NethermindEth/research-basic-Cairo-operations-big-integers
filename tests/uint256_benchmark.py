@@ -110,3 +110,28 @@ async def test_benchmark_uin256(uint256_contract):
     "|",
     "%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter,
     )
+    
+    execution_info = await uint256_contract.uint256_expand_c(y_split).call()
+    y_exp = execution_info.result[0]
+    execution_info = await uint256_contract.uint256_mul_expanded_c(x_split, y_exp).call()
+    
+    print(
+    "%20s" % "mul expanded",
+    "|",
+    "%20s" % execution_info.call_info.execution_resources.n_steps,
+    "|",
+    "%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter,
+    )
+
+    execution_info = await uint256_contract.uint256_unsigned_div_rem_expanded_c(x_split, y_exp).call()
+    
+    print(
+    "%20s" % "unsigned_div_rem expanded",
+    "|",
+    "%20s" % execution_info.call_info.execution_resources.n_steps,
+    "|",
+    "%-10s" % execution_info.call_info.execution_resources.builtin_instance_counter,
+    )
+    
+
+    
