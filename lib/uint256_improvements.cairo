@@ -129,7 +129,7 @@ func uint256_sqrt{range_check_ptr}(n: Uint256) -> (res: Uint256) {
     return (res=Uint256(low=root,high=0));
 }
 
-//Same as original, but uses new uint256_mul
+//Uses new uint256_mul, also uses no_uint256_check version of add
 func uint256_unsigned_div_rem{range_check_ptr}(a: Uint256, div: Uint256) -> (
     quotient: Uint256, remainder: Uint256
 ) {
@@ -158,7 +158,7 @@ func uint256_unsigned_div_rem{range_check_ptr}(a: Uint256, div: Uint256) -> (
     let (res_mul, carry) = uint256_mul(quotient, div);
     assert carry = Uint256(0, 0);
 
-    let (check_val, add_carry) = uint256_add(res_mul, remainder);
+    let (check_val, add_carry) = _uint256_add_no_uint256_check(res_mul, remainder);
     assert check_val = a;
     assert add_carry = 0;
 
@@ -296,7 +296,7 @@ func uint256_unsigned_div_rem_expanded{range_check_ptr}(a: Uint256, div: Uint256
     let (res_mul, carry) = uint256_mul_expanded(quotient, div);
     assert carry = Uint256(0, 0);
 
-    let (check_val, add_carry) = uint256_add(res_mul, remainder);
+    let (check_val, add_carry) = _uint256_add_no_uint256_check(res_mul, remainder);
     assert check_val = a;
     assert add_carry = 0;
 
