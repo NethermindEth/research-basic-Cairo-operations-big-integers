@@ -1,4 +1,4 @@
-# 384-bit prime field arithmetic - Cairo
+# Basic operations involving big integers - Cairo
 
 WARNING: The latest version of asyncio (>=0.19.0) is not supported. To downgrade do `pip install pytest-asyncio==0.18.3`
 
