@@ -29,6 +29,31 @@ func split_128{range_check_ptr}(a: felt) -> (low: felt, high: felt) {
     return (low, high);
 }
 
+// Adds two integers. Returns the result as a 256-bit integer and the (1-bit) carry.
+// Doesn't verify that the result is a valid Uint256
+// For use when that check would be performed elsewhere
+func _uint256_add_no_uint256_check{range_check_ptr}(a: Uint256, b: Uint256) -> (res: Uint256, carry: felt) {
+    alloc_locals;
+    local res: Uint256;
+    local carry_low: felt;
+    local carry_high: felt;
+    %{
+        sum_low = ids.a.low + ids.b.low
+        ids.carry_low = 1 if sum_low >= ids.SHIFT else 0
+        sum_high = ids.a.high + ids.b.high + ids.carry_low
+        ids.carry_high = 1 if sum_high >= ids.SHIFT else 0
+    %}
+
+    assert carry_low * carry_low = carry_low;
+    assert carry_high * carry_high = carry_high;
+
+    assert res.low = a.low + b.low - carry_low * SHIFT;
+    assert res.high = a.high + b.high + carry_low - carry_high * SHIFT;
+
+    return (res, carry_high);
+}
+
+
 
 func uint256_mul{range_check_ptr}(a: Uint256, b: Uint256) -> (low: Uint256, high: Uint256) {
     alloc_locals;
@@ -143,6 +168,8 @@ func uint256_unsigned_div_rem{range_check_ptr}(a: Uint256, div: Uint256) -> (
 }
 
 
+
+
 // Subtracts two integers. Returns the result as a 256-bit integer
 // and a sign felt that is 1 if the result is non-negative, convention based on signed_nn
 // although I think the opposite convetion makes more sense
@@ -169,7 +196,7 @@ func uint256_sub{range_check_ptr}(a: Uint256, b: Uint256) -> (res: Uint256, sign
         ids.res.high = res_split[1]
      %}
      uint256_check(res);
-     let (aa, inv_sign) = uint256_add(res,b);
+     let (aa, inv_sign) = _uint256_add_no_uint256_check(res,b);
      assert aa = a;
      return (res, 1-inv_sign);
 }
