@@ -80,6 +80,35 @@ namespace uint384_lib {
         return (res, carry_d2);
     }
 
+    // Adds two integers. Returns the result as a 384-bit integer and the (1-bit) carry.
+    // Doesn't verify that the result is a proper Uint384, that's now the responsibility of the calling function
+    func _add_no_uint384_check{range_check_ptr}(a: Uint384, b: Uint384) -> (res: Uint384, carry: felt) {
+        alloc_locals;
+        local res: Uint384;
+        local carry_d0: felt;
+        local carry_d1: felt;
+        local carry_d2: felt;
+        %{
+            sum_d0 = ids.a.d0 + ids.b.d0
+            ids.carry_d0 = 1 if sum_d0 >= ids.SHIFT else 0
+            sum_d1 = ids.a.d1 + ids.b.d1 + ids.carry_d0
+            ids.carry_d1 = 1 if sum_d1 >= ids.SHIFT else 0
+            sum_d2 = ids.a.d2 + ids.b.d2 + ids.carry_d1
+            ids.carry_d2 = 1 if sum_d2 >= ids.SHIFT else 0
+        %}
+
+        // Either 0 or 1
+        assert carry_d0 * carry_d0 = carry_d0;
+        assert carry_d1 * carry_d1 = carry_d1;
+        assert carry_d2 * carry_d2 = carry_d2;
+
+        assert res.d0 = a.d0 + b.d0 - carry_d0 * SHIFT;
+        assert res.d1 = a.d1 + b.d1 + carry_d0 - carry_d1 * SHIFT;
+        assert res.d2 = a.d2 + b.d2 + carry_d1 - carry_d2 * SHIFT;
+
+        return (res, carry_d2);
+    }
+
     // Splits a field element in the range [0, 2^192) to its low 64-bit and high 128-bit parts.
     func split_64{range_check_ptr}(a: felt) -> (low: felt, high: felt) {
         alloc_locals;
@@ -922,7 +951,7 @@ namespace uint384_lib {
         let (res_mul: Uint384, carry: Uint384) = mul_d(quotient, div);
         assert carry = Uint384(0, 0, 0);
 
-        let (check_val: Uint384, add_carry: felt) = add(res_mul, remainder);
+        let (check_val: Uint384, add_carry: felt) = _add_no_uint384_check(res_mul, remainder);
         assert check_val = a;
         assert add_carry = 0;
 
@@ -976,7 +1005,7 @@ namespace uint384_lib {
         let (res_mul: Uint384, carry: Uint384) = mul_expanded(quotient, div);
         assert carry = Uint384(0, 0, 0);
 
-        let (check_val: Uint384, add_carry: felt) = add(res_mul, remainder);
+        let (check_val: Uint384, add_carry: felt) = _add_no_uint384_check(res_mul, remainder);
         assert check_val = a;
         assert add_carry = 0;
 
@@ -1020,7 +1049,7 @@ namespace uint384_lib {
         let (res_mul: Uint384, carry: felt) = add(quotient, quotient);
         assert carry = 0;
 
-        let (check_val: Uint384, add_carry: felt) = add(res_mul, Uint384(remainder,0,0));
+        let (check_val: Uint384, add_carry: felt) = _add_no_uint384_check(res_mul, Uint384(remainder,0,0));
         assert check_val = a;
         assert add_carry = 0;
 
@@ -1134,7 +1163,7 @@ namespace uint384_lib {
             ids.res.d2 = res_split[2]
 	%}
 	check(res);
-	let (aa, inv_sign) = add(res,b);
+	let (aa, inv_sign) = _add_no_uint384_check(res,b);
 	assert aa = a;
         return (res, 1-inv_sign);
     }
