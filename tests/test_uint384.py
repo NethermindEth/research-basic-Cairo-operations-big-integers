@@ -97,6 +97,48 @@ async def test_mul(x, y, uint384_contract):
 
 @given(
     x=st.integers(min_value=1, max_value=2**384 - 1),
+    y=st.integers(min_value=1, max_value=2**128 - 1),
+)
+@settings(deadline=None)
+@pytest.mark.asyncio
+async def test_mul_by_uint128(x, y, uint384_contract):
+
+    print(x, y)
+
+    x_split = split(x, num_bits_shift=128, length=3)
+
+    execution_info = await uint384_contract.uint384_mul_by_uint128(x_split, y).call()
+    result_split = execution_info.result
+    low = pack(result_split[0], num_bits_shift=128)
+    high = result_split[1]
+    result = low + 2**384 * high
+
+    assert result == x * y
+
+
+@given(
+    x=st.integers(min_value=1, max_value=2**384 - 1),
+    y=st.integers(min_value=1, max_value=2**64 - 1),
+)
+@settings(deadline=None)
+@pytest.mark.asyncio
+async def test_mul_by_uint64(x, y, uint384_contract):
+
+    print(x, y)
+
+    x_split = split(x, num_bits_shift=128, length=3)
+
+    execution_info = await uint384_contract.uint384_mul_by_uint64(x_split, y).call()
+    result_split = execution_info.result
+    low = pack(result_split[0], num_bits_shift=128)
+    high = result_split[1]
+    result = low + 2**384 * high
+
+    assert result == x * y
+
+
+@given(
+    x=st.integers(min_value=1, max_value=2**384 - 1),
 )
 @settings(deadline=None)
 @pytest.mark.asyncio

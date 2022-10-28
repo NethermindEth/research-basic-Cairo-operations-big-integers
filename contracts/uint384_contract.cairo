@@ -76,6 +76,18 @@ func uint384_mul_expanded{range_check_ptr}(a: Uint384, b: Uint384_expand) -> (lo
 }
 
 @view
+func uint384_mul_by_uint128{range_check_ptr}(a: Uint384, b: felt) -> (low: Uint384, high: felt) {
+    let (low: Uint384, high: felt) = uint384_lib.mul_by_uint128(a, b);
+    return (low, high);
+}
+
+@view
+func uint384_mul_by_uint64{range_check_ptr}(a: Uint384, b: felt) -> (low: Uint384, high: felt) {
+    let (low: Uint384, high: felt) = uint384_lib.mul_by_uint64(a, b);
+    return (low, high);
+}
+
+@view
 func uint384_square_c{range_check_ptr}(a: Uint384) -> (low: Uint384, high: Uint384) {
     let (low: Uint384, high: Uint384) = uint384_lib.square_c(a);
     return (low, high);
