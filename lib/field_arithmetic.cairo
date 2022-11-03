@@ -57,6 +57,9 @@ namespace field_arithmetic {
             ids.res.d1 = res_split[1]
             ids.res.d2 = res_split[2]
         %}
+	uint384_lib.check(res);
+	let (is_valid) = uint384_lib.lt(res, p);
+	assert is_valid = 1;
         let (b_plus_res) = add(b, res, p);
         assert b_plus_res = a;
         return (res,);
@@ -116,6 +119,7 @@ namespace field_arithmetic {
             ids.b_inverse_mod_p.d1 = b_inverse_mod_p_split[1]
             ids.b_inverse_mod_p.d2 = b_inverse_mod_p_split[2]
         %}
+	uint384_lib.check(b_inverse_mod_p);
         let (b_times_b_inverse) = mul(b, b_inverse_mod_p, p);
         assert b_times_b_inverse = Uint384(1, 0, 0);
 
@@ -159,6 +163,9 @@ namespace field_arithmetic {
             ids.ans.d1 = ans_split[1]
             ids.ans.d2 = ans_split[2]
         %}
+	uint384_lib.check(ans);
+	let (is_valid) = uint384_lib.lt(ans, p);
+	assert is_valid = 1;
         let (b_times_ans) = mul(b, ans, p);
         assert b_times_ans = a;
 
